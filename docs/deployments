@@ -1,0 +1,17 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cmdb-collector
+spec:
+  # 如果被指定， .spec.selector 必须匹配 .spec.template.metadata.labels，否则它将被API拒绝。如果 .spec.selector 没有被指定， .spec.selector.matchLabels 默认是 .spec.template.metadata.labels。
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: cmdb-collector
+    spec:
+      containers:
+      - name: cmdb-collector
+        image: cmdb-collector:test
+        ports:
+        - containerPort: 80
