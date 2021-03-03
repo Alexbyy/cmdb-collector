@@ -2,44 +2,44 @@ package docs
 
 import (
 	"bytes"
-"encoding/json"
-"fmt"
-"io/ioutil"
-"net/http"
-"strconv"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"strconv"
 )
 
 type Model struct {
 	Bk_classification_id string `json:"bk_classification_id"`
-	Bk_obj_icon  string    `json:"bk_obj_icon"`
-	Bk_obj_id string `json:"bk_obj_id"`
-	Bk_obj_name string `json:"bk_obj_name"`
-	Bk_supplier_account string `json:"bk_supplier_account"`
-	UserName string `json:"userName"`
+	Bk_obj_icon          string `json:"bk_obj_icon"`
+	Bk_obj_id            string `json:"bk_obj_id"`
+	Bk_obj_name          string `json:"bk_obj_name"`
+	Bk_supplier_account  string `json:"bk_supplier_account"`
+	UserName             string `json:"userName"`
 }
 
 type Attr struct {
-	Bk_obj_id string `json:"bk_obj_id"`
-	Bk_property_group string `json:"bk_property_group"`
-	Bk_property_id string `json:"bk_property_id"`
-	Bk_property_index string `json:"bk_property_index"`
-	Bk_property_name string `json:"bk_property_name"`
-	Bk_property_type string `json:"bk_property_type"`
+	Bk_obj_id           string `json:"bk_obj_id"`
+	Bk_property_group   string `json:"bk_property_group"`
+	Bk_property_id      string `json:"bk_property_id"`
+	Bk_property_index   string `json:"bk_property_index"`
+	Bk_property_name    string `json:"bk_property_name"`
+	Bk_property_type    string `json:"bk_property_type"`
 	Bk_supplier_account string `json:"bk_supplier_account"`
-	Creator string `json:"creator"`
-	Editable string `json:"editable"`
-	Isrequired string `json:"isrequired"`
-	Option string `json:"option"`
-	Placeholder string `json:"placeholder"`
-	Unit string `json:"unit"`
+	Creator             string `json:"creator"`
+	Editable            string `json:"editable"`
+	Isrequired          string `json:"isrequired"`
+	Option              string `json:"option"`
+	Placeholder         string `json:"placeholder"`
+	Unit                string `json:"unit"`
 }
 type AssociObj struct {
-	Bk_asst_id string `json:"bk_asst_id"`
-	Bk_asst_obj_id string `json:"bk_asst_obj_id"`
-	Bk_obj_asst_id string `json:"bk_obj_asst_id"`
+	Bk_asst_id       string `json:"bk_asst_id"`
+	Bk_asst_obj_id   string `json:"bk_asst_obj_id"`
+	Bk_obj_asst_id   string `json:"bk_obj_asst_id"`
 	Bk_obj_asst_name string `json:"bk_obj_asst_name"`
-	Bk_obj_id string `json:"bk_obj_id"`
-	Mapping string `json:"mapping"`
+	Bk_obj_id        string `json:"bk_obj_id"`
+	Mapping          string `json:"mapping"`
 }
 
 type Client struct {
@@ -49,29 +49,27 @@ type Client struct {
 	ContentType string
 	HttpClient  *http.Client
 	objs        []map[string]string
-
 }
 
 func newClient(url string) *Client {
 	cookies := map[string]string{
-		"HTTP_BLUEKING_SUPPLIER_ID" : "0",
-		"http_scheme" : "http",
-		"cc3" : "MTYxMTkxMzIzMHxOd3dBTkVGQ1NVTkZTVTVHVTA0MVZUTk5XVkUxVlVSRlVFNUVTRmRMVXpWRFZsSTFTRFpHVGtVeldEZFBRMFEyUjFCRlRVOUpVRkU9fBNp_HYCb_mz_B0U210DQL9ZLcp48P2rA1PPJb3CLwZJ",
+		"HTTP_BLUEKING_SUPPLIER_ID": "0",
+		"http_scheme":               "http",
+		"cc3":                       "MTYxMTkxMzIzMHxOd3dBTkVGQ1NVTkZTVTVHVTA0MVZUTk5XVkUxVlVSRlVFNUVTRmRMVXpWRFZsSTFTRFpHVGtVeldEZFBRMFEyUjFCRlRVOUpVRkU9fBNp_HYCb_mz_B0U210DQL9ZLcp48P2rA1PPJb3CLwZJ",
 	}
 	cookieStr := "HTTP_BLUEKING_SUPPLIER_ID=0; http_scheme=http; cc3=MTYxMTkxMzIzMHxOd3dBTkVGQ1NVTkZTVTVHVTA0MVZUTk5XVkUxVlVSRlVFNUVTRmRMVXpWRFZsSTFTRFpHVGtVeldEZFBRMFEyUjFCRlRVOUpVRkU9fBNp_HYCb_mz_B0U210DQL9ZLcp48P2rA1PPJb3CLwZJ"
-	newClient :=  &Client{
+	newClient := &Client{
 		BaseUrl:     "http://10.110.19.61:32033",
 		ContentType: "application/json;charset=UTF-8",
 		CookieMap:   cookies,
 		CookieStr:   cookieStr,
 		HttpClient:  &http.Client{},
-
 	}
 	return newClient
 }
-func(c *Client) addModel(method string, url string, body Model){
+func (c *Client) addModel(method string, url string, body Model) {
 	ms, err := json.Marshal(body)
-	if err != nil{
+	if err != nil {
 		fmt.Errorf("json 编译错误：v%\n", err)
 	}
 	payload := bytes.NewBuffer([]byte(ms))
@@ -92,15 +90,15 @@ func(c *Client) addModel(method string, url string, body Model){
 	fmt.Printf("add model res:%v\n", res)
 }
 
-func(c *Client)delModel(method string, url string, id string){
+func (c *Client) delModel(method string, url string, id string) {
 	sign := false
 	for _, obj := range c.objs {
-		if obj["id"] == id{
+		if obj["id"] == id {
 			sign = true
 			break
 		}
 	}
-	if !sign{
+	if !sign {
 		fmt.Errorf("不存在id为%v的模型", id)
 	}
 
@@ -120,9 +118,9 @@ func(c *Client)delModel(method string, url string, id string){
 	_ = PrintJson(res)
 }
 
-func(c *Client) addAttr(method string, url string, body Attr){
+func (c *Client) addAttr(method string, url string, body Attr) {
 	ms, err := json.Marshal(body)
-	if err != nil{
+	if err != nil {
 		fmt.Errorf("json 编译错误：v%\n", err)
 	}
 	payload := bytes.NewBuffer([]byte(ms))
@@ -140,9 +138,9 @@ func(c *Client) addAttr(method string, url string, body Attr){
 	_ = PrintJson(res)
 }
 
-func(c *Client) objAssociation(method string, url string, body AssociObj){
+func (c *Client) objAssociation(method string, url string, body AssociObj) {
 	ms, err := json.Marshal(body)
-	if err != nil{
+	if err != nil {
 		fmt.Errorf("json 编译错误：v%\n", err)
 	}
 	payload := bytes.NewBuffer([]byte(ms))
@@ -159,9 +157,9 @@ func(c *Client) objAssociation(method string, url string, body AssociObj){
 	}
 	_ = PrintJson(res)
 }
-func(c *Client) addInstance(method string, url string, body map[string]string){
+func (c *Client) addInstance(method string, url string, body map[string]string) {
 	ms, err := json.Marshal(body)
-	if err != nil{
+	if err != nil {
 		fmt.Errorf("json 编译错误：v%\n", err)
 	}
 	payload := bytes.NewBuffer([]byte(ms))
@@ -178,9 +176,9 @@ func(c *Client) addInstance(method string, url string, body map[string]string){
 	}
 	_ = PrintJson(res)
 }
-func(c *Client) instAssoci(method string, url string, body map[string]interface{}){
+func (c *Client) instAssoci(method string, url string, body map[string]interface{}) {
 	ms, err := json.Marshal(body)
-	if err != nil{
+	if err != nil {
 		fmt.Errorf("json 编译错误：v%\n", err)
 	}
 	payload := bytes.NewBuffer([]byte(ms))
@@ -198,32 +196,33 @@ func(c *Client) instAssoci(method string, url string, body map[string]interface{
 	_ = PrintJson(res)
 }
 
-func ParseResponse(response *http.Response) (map[string]interface{}, error){
+func ParseResponse(response *http.Response) (map[string]interface{}, error) {
 	var result map[string]interface{}
-	body,err := ioutil.ReadAll(response.Body)
+	body, err := ioutil.ReadAll(response.Body)
 	if err == nil {
 		err = json.Unmarshal(body, &result)
 	}
 
-	return result,err
+	return result, err
 }
+
 //解析(map[string]interface{})数据格式并打印出数据
 
-func PrintJson(m map[string]interface{}) map[string]string{
+func PrintJson(m map[string]interface{}) map[string]string {
 	obj := map[string]string{}
 	for k, v := range m {
 		switch vv := v.(type) {
 		case string:
-			if k == "bk_classification_id"{
+			if k == "bk_classification_id" {
 				obj["bk_classification_id"] = vv
-			}else if k == "bk_obj_name"{
+			} else if k == "bk_obj_name" {
 				obj["bk_obj_name"] = vv
-			}else if k == "bk_obj_id"{
+			} else if k == "bk_obj_id" {
 				obj["bk_obj_id"] = vv
 			}
 			fmt.Println(k, "is string", vv)
 		case float64:
-			if k=="id"{
+			if k == "id" {
 				obj["id"] = strconv.FormatFloat(vv, 'E', -1, 64)
 			}
 			fmt.Println(k, "is float", int64(vv))
@@ -245,4 +244,3 @@ func PrintJson(m map[string]interface{}) map[string]string{
 	}
 	return obj
 }
-

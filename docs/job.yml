@@ -1,14 +1,12 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: batch/v1
+kind: Job
 metadata:
   name: cmdb-collector
   namespace: monitoring
 spec:
-  selector:
-    matchLabels:
-      app: cmdb-collector
-      release: cmdb-collector
-  replicas: 1
+  completions: 1     			# 需要运行的pod数量
+  parallelism: 1      			# 允许并发运行的pod数量
+  activeDeadlineSeconds: 360  	# pod运行的超时时间
   template:
     metadata:
       labels:
@@ -19,8 +17,6 @@ spec:
         - name: cmdb-collector
           image: registry-jinan-lab.inspurcloud.cn/service/lma/cmdb-collector:1.0.0
           imagePullPolicy: Always
+      restartPolicy: Never
       serviceAccount: cmdb-collector
       serviceAccountName: cmdb-collector
-
-
-
