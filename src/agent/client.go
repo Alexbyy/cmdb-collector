@@ -108,6 +108,48 @@ func (c *Client) GetInstanceList(url string, body map[string]interface{}) (*inte
 
 }
 
+func (c *Client) GetAssociList(id string)(map[string]interface{}, error) {
+	body := map[string]interface{}{"bk_obj_asst_id": id}
+	ms, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	payload := bytes.NewBuffer([]byte(ms))
+	url := c.BaseUrl + "/api/v3/find/instassociation"
+	req, err := http.NewRequest("POST", url, payload)
+	req.Header.Set("Content-Type", c.ContentType)
+	req.Header.Set("Cookie", c.CookieStr)
+	resp, err := c.HttpClient.Do(req)
+	if err != nil{
+		return nil, err
+	}
+	defer resp.Body.Close()
+	res, err := ParseResponse(resp)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+
+}
+
+func (c *Client) DelAssoci(id string) (map[string]interface{}, error) {
+	url := c.BaseUrl + "/api/v3/delete/instassociation/" + id
+	req, err := http.NewRequest("DELETE", url, nil)
+	req.Header.Set("Content-Type", c.ContentType)
+	req.Header.Set("Cookie", c.CookieStr)
+	resp, err := c.HttpClient.Do(req)
+	if err != nil{
+		return nil, err
+	}
+	defer resp.Body.Close()
+	res, err := ParseResponse(resp)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+
 func ParseResponse(response *http.Response) (map[string]interface{}, error) {
 	var result map[string]interface{}
 	body, err := ioutil.ReadAll(response.Body)
