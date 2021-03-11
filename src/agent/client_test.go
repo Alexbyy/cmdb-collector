@@ -73,3 +73,14 @@ func TestClient_GetAssociList(t *testing.T) {
 		}
 	}
 }
+
+func TestClient_GetModels(t *testing.T) {
+	agent := NewClient("http://10.110.19.61:32033")
+	res, err := agent.GetModels()
+	if err != nil {
+		klog.Errorf("GetAssociList error: %v\n", err)
+	}
+	PrintJson(res)
+
+}
+

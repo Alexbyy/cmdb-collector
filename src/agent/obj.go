@@ -17,6 +17,7 @@ type Container struct {
 	Name          string `json:"bk_inst_name"`
 	Id			string `json:"icp_container_id"`
 	ContainerName string `json:"icp_container_name"`
+	PodName  string  `json:"icp_pod_name"`
 	Image         string `json:"icp_container_image,omitempty"`
 	//Command       string `json:"icp_container_comm,omitempty"`
 	//Args          string `json:"icp_container_args,omitempty"`

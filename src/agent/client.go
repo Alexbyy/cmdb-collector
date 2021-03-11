@@ -149,6 +149,50 @@ func (c *Client) DelAssoci(id string) (map[string]interface{}, error) {
 	return res, nil
 }
 
+//获取所有模型内容
+func (c *Client) GetModels()(map[string]interface{}, error){
+	url := c.BaseUrl + "/api/v3/find/classificationobject"
+	req, err := http.NewRequest("POST", url, nil)
+	req.Header.Set("Content-Type", c.ContentType)
+	req.Header.Set("Cookie", c.CookieStr)
+	resp, err := c.HttpClient.Do(req)
+	if err != nil{
+		return nil, err
+	}
+	defer resp.Body.Close()
+	res, err := ParseResponse(resp)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+//获取具体某个模型的所有关联
+func (c *Client) GetObjAssociation(name string)(map[string]interface{}, error){
+	body := map[string]interface{}{"bk_asst_obj_id": name}
+	ms, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	payload := bytes.NewBuffer([]byte(ms))
+	url := c.BaseUrl + "/api/v3/find/classificationobject"
+	req, err := http.NewRequest("POST", url, payload)
+	req.Header.Set("Content-Type", c.ContentType)
+	req.Header.Set("Cookie", c.CookieStr)
+	resp, err := c.HttpClient.Do(req)
+	if err != nil{
+		return nil, err
+	}
+	defer resp.Body.Close()
+	res, err := ParseResponse(resp)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+
+
 
 func ParseResponse(response *http.Response) (map[string]interface{}, error) {
 	var result map[string]interface{}
