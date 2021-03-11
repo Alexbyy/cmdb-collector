@@ -24,10 +24,10 @@ func main() {
 	records := map[string]interface{}{}
 
 	//step2:遍历获取到的objects
-	for _, value := range objects["data"].([]map[string]interface{}) {
+	for _, value := range objects["data"].([]interface{}) {
 		//此id为模型分组id
-		classificationId := value["bk_classification_id"].(string)
-		if classificationId == "bk_host_manage" || classificationId == "bk_biz_topo" || classificationId == "icon-cc-organization" || classificationId == "icon-cc-network-equipment" {
+		classificationId := value.(map[string]interface{})["bk_classification_id"].(string)
+		if classificationId == "bk_host_manage" || classificationId == "bk_biz_topo" || classificationId == "bk_organization" || classificationId == "bk_network" {
 			continue
 		}
 
@@ -37,35 +37,131 @@ func main() {
 		}
 
 		//获取分组id下的object的数据
-		objects := value["bk_objects"].([]map[string]interface{})
+		objects := value.(map[string]interface{})["bk_objects"].([]interface{})
 		for _, item := range objects {
-			objId := item["bk_obj_id"].(string)
+			objId := item.(map[string]interface{})["bk_obj_id"].(string)
 			data, err := collector.GetObjData(objId)
 			if err != nil {
 				klog.Errorf("获取object数据:%v 错误：%v\n", objId, err)
 			}
+			//fmt.Printf("获取object data %v\n", data)
+			if data == nil{
+				continue
+			}
 
-			//遍历data，创建实例
+			//step3：遍历data，创建实例
 			for _, item := range *data {
-				//比如pod返回的数据
-				if data, ok := item.(struct{}); ok {
-					agent.AddInstance("POST", objId, data)
-				}
 
-				//比如container返回的数据
-				if data, ok := item.([]struct{}); ok {
-					for _, data := range data {
-						res, err := agent.AddInstance("POST", objId, data)
-						if err != nil {
-							klog.Errorf("AddInstance error: %v\n", err)
+				switch item := item.(type) {
+				case nil:
+					continue
+				default:
+					fmt.Printf("类型为：%T\n", item)
+					InstanceRes, err := agent.AddInstance("POST", objId, item)
+					if err != nil {
+						klog.Errorf("AddInstance error: %v\n", err)
+						continue
 
-						}
-						if res["bk_error_msg"] != "success" {
-							klog.Errorf("addInstance  %v error, error info: %v\n", data, res["bk_error_msg"])
-							continue
+					}
+					if InstanceRes["bk_error_msg"] != "success" {
+						klog.Errorf("addInstance  %v error, error info: %v\n", item, InstanceRes["bk_error_msg"])
+						continue
+					}
+
+					//step4：已成功创建实例，这一步获取obj_item的关系
+					associRes1, associRes2, err := agent.GetObjAssociation(objId)
+					if err != nil {
+						klog.Errorf("GetObjAssociation error: %v\n", err)
+						continue
+
+					}
+					if associRes1["bk_error_msg"] != "success" || associRes2["bk_error_msg"] != "success" {
+						klog.Errorf("GetObjAssociation  %v error, error info: %v;%v\n", item, associRes1["bk_error_msg"],associRes2["bk_error_msg"])
+						continue
+					}
+
+					//step5:遍历associRes建立实例间关系
+					associ1 := associRes1["data"].([]interface{})
+					associ2 := associRes2["data"].([]interface{})
+					if len(associ1) > 0 {
+						for _, item := range associ1 {
+							bkObjAsstId := item.(map[string]interface{})["bk_asst_obj_id"].(string)
+							bkAsstObjId := item.(map[string]interface{})["bk_asst_obj_id"].(string)
+							if _, ok := a.Association[bkObjAsstId]; !ok{
+								klog.Errorf("没有配置实例关系如何配置：obj_item: %v;assObjId:%v; bk_obj_asst_id:%v\n", objId, bkAsstObjId, bkObjAsstId)
+								continue
+							}
+
+							res, err := agent.GetInstanceList(bkAsstObjId, nil)
+							if err != nil{
+								klog.Errorf("获取实例列表错误：%V\n", err)
+							}
+
+							for _, item := range (*res).([]interface{}) {
+								rule := a.Association[bkObjAsstId]
+								instanData := InstanceRes["data"].(map[string]interface{})
+
+								//先暂时默认都为string
+								temp1 := instanData[rule[objId]].(string)
+								temp2 := item.(map[string]interface{})[rule[bkObjAsstId]].(string)
+
+								if temp1 != temp2{
+									continue
+								}
+
+								//相等建立关联
+								var1 := item.(map[string]interface{})["bk_inst_id"].(float64)
+								var2 := instanData["bk_inst_id"].(float64)
+								body := map[string]interface{}{"bk_asst_inst_id": var1, "bk_inst_id": var2, "bk_obj_asst_id": bkObjAsstId}
+								res, err := agent.InstAssoci("POST", "/api/v3/create/instassociation", body)
+								if err != nil{
+									klog.Errorf("建立实例关系错误：err:%v; obj_item: %v;assObjId:%v; bk_obj_asst_id:%v\n",err, objId, bkAsstObjId, bkObjAsstId)
+									continue
+								}
+								if res["bk_error_msg"] != "success" {
+									klog.Errorf("建立实例关系错误： obj_item: %v;assObjId:%v; bk_obj_asst_id:%v\n", objId, bkAsstObjId, bkObjAsstId)
+									continue
+								}
+
+
+
+
+
+							}
+
+
+
 						}
 					}
+					if len(associ2) > 0 {
+
+					}
+
+
+
 				}
+
+
+				////比如pod返回的数据
+				//data := item.(struct{})
+				//agent.AddInstance("POST", objId, data)
+				////if data, ok := item.(struct{}); ok {
+				////	agent.AddInstance("POST", objId, data)
+				////}
+				////比如container返回的数据
+				//if data, ok := item.([]struct{}); ok {
+				//	for _, data := range data {
+				//		res, err := agent.AddInstance("POST", objId, data)
+				//		if err != nil {
+				//			klog.Errorf("AddInstance error: %v\n", err)
+				//
+				//		}
+				//		if res["bk_error_msg"] != "success" {
+				//			klog.Errorf("addInstance  %v error, error info: %v\n", data, res["bk_error_msg"])
+				//			continue
+				//		}
+				//	}
+				//}
 			}
 
 		}

@@ -47,14 +47,17 @@ func (c *Collector) GetObjData(id string) (*[]interface{}, error) {
 		res, err = c.GetContainers("monitoring")
 		return res, err
 	}
-	if id == "deployment" {
+	if id == "deploy" {
 		res, err = c.GetDeployments("monitoring")
+		return res, err
 	}
-	if id == "statefulset" {
+	if id == "sts" {
 		res, err = c.GetStatefulsets("monitoring")
+		return res, err
 	}
-	if id == "demonset" {
+	if id == "ds" {
 		res, err = c.GetDaemonSets("monitoring")
+		return res, err
 	}
 	if res == nil {
 		klog.Errorf("未知object id %v\n", id)
@@ -77,6 +80,23 @@ func (c *Collector) GetPods(ns string) (*[]interface{}, error) {
 	return &podList, nil
 }
 
+func (c *Collector) GetNodes() (*[]interface{}, error) {
+	nodes, err := c.client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
+	var nodeList []interface{}
+	for _, item := range nodes.Items {
+		node, err := PrepareNodeData(item)
+		if err != nil {
+			return nil, err
+		}
+		nodeList = append(nodeList, *node)
+	}
+	if err != nil {
+		return nil, err
+	}
+	klog.Infof("There are %d nodes in the cluster\n", len(nodes.Items))
+	return &nodeList, nil
+}
+
 func (c *Collector) GetContainers(ns string) (*[]interface{}, error) {
 	var containers []interface{}
 	pods, err := c.client.CoreV1().Pods(ns).List(context.TODO(), metav1.ListOptions{})
@@ -86,9 +106,12 @@ func (c *Collector) GetContainers(ns string) (*[]interface{}, error) {
 
 	for _, item := range pods.Items {
 		con := PrepareContainerData(item)
-		containers = append(containers, *con)
+		if len(*con) > 0{
+			for _, item := range *con {
+				containers = append(containers, item)
+			}
+		}
 	}
-
 	return &containers, nil
 }
 
@@ -106,22 +129,6 @@ func (c *Collector) GetNamespaces() {
 
 }
 
-func (c *Collector) GetNodes() (*[]interface{}, error) {
-	nodes, err := c.client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
-	var nodeList []interface{}
-	for _, item := range nodes.Items {
-		node, err := PrepareNodeData(item)
-		if err != nil {
-			return nil, err
-		}
-		nodeList = append(nodeList, *node)
-	}
-	if err != nil {
-		return nil, err
-	}
-	klog.Infof("There are %d nodes in the cluster\n", len(nodes.Items))
-	return &nodeList, nil
-}
 
 func (c *Collector) GetStatefulsets(ns string) (*[]interface{}, error) {
 	sts, err := c.client.AppsV1().StatefulSets(ns).List(context.TODO(), metav1.ListOptions{})

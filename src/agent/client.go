@@ -80,13 +80,13 @@ func (c *Client) InstAssoci(method string, url string, body map[string]interface
 	return res, nil
 }
 
-func (c *Client) GetInstanceList(url string, body map[string]interface{}) (*interface{}, error) {
+func (c *Client) GetInstanceList(objId string, body map[string]interface{}) (*interface{}, error) {
 	ms, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	payload := bytes.NewBuffer([]byte(ms))
-	url = c.BaseUrl + url
+	url := c.BaseUrl + "/api/v3/find/instassociation/object/" + objId
 	req, err := http.NewRequest("POST", url, payload)
 	req.Header.Set("Content-Type", c.ContentType)
 	req.Header.Set("Cookie", c.CookieStr)
@@ -168,27 +168,36 @@ func (c *Client) GetModels() (map[string]interface{}, error) {
 }
 
 //获取具体某个模型的所有关联
-func (c *Client) GetObjAssociation(name string) (map[string]interface{}, error) {
-	body := map[string]interface{}{"bk_asst_obj_id": name}
-	ms, err := json.Marshal(body)
+func (c *Client) GetObjAssociation(name string) (map[string]interface{},map[string]interface{}, error) {
+	body1 := map[string]interface{}{"bk_asst_obj_id": name}
+	body2 := map[string]interface{}{"bk_obj_id": name}
+	ms1, err := json.Marshal(body1)
+	ms2, err := json.Marshal(body2)
 	if err != nil {
-		return nil, err
+		return nil,nil, err
 	}
-	payload := bytes.NewBuffer([]byte(ms))
+	payload1 := bytes.NewBuffer([]byte(ms1))
+	payload2 := bytes.NewBuffer([]byte(ms2))
 	url := c.BaseUrl + "/api/v3/find/classificationobject"
-	req, err := http.NewRequest("POST", url, payload)
-	req.Header.Set("Content-Type", c.ContentType)
-	req.Header.Set("Cookie", c.CookieStr)
-	resp, err := c.HttpClient.Do(req)
+	req1, err := http.NewRequest("POST", url, payload1)
+	req2, err := http.NewRequest("POST", url, payload2)
+	req1.Header.Set("Content-Type", c.ContentType)
+	req1.Header.Set("Cookie", c.CookieStr)
+	req2.Header.Set("Content-Type", c.ContentType)
+	req2.Header.Set("Cookie", c.CookieStr)
+	resp1, err := c.HttpClient.Do(req1)
+	resp2, err := c.HttpClient.Do(req2)
 	if err != nil {
-		return nil, err
+		return nil,nil, err
 	}
-	defer resp.Body.Close()
-	res, err := ParseResponse(resp)
+	defer resp1.Body.Close()
+	defer resp2.Body.Close()
+	res1, err := ParseResponse(resp1)
+	res2, err := ParseResponse(resp2)
 	if err != nil {
-		return nil, err
+		return nil,nil, err
 	}
-	return res, nil
+	return res1, res2, nil
 }
 
 func ParseResponse(response *http.Response) (map[string]interface{}, error) {

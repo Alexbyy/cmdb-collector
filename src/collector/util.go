@@ -56,8 +56,8 @@ func PrepareContainerData(item v1.Pod) *[]a.Container {
 		}
 
 		container := a.Container{
-			Name:          c.Name + "_" + item.Name,
-			Id:            string(item.UID),
+			Name:          c.Name,
+			Id:            c.Name + "_" + string(item.UID),
 			ContainerName: c.Name,
 			PodName:       item.Name,
 			Image:         c.Image,
