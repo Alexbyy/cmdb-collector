@@ -1,8 +1,8 @@
 package collector
 
 import (
-	a "cmdb-collector/src/agent"
 	"context"
+	"errors"
 	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -31,26 +31,65 @@ func NewCollector() *Collector {
 	}
 }
 
-func (c *Collector) GetPods(ns string) (*[]a.Pods, *map[string][]a.Container) {
-	var podList []a.Pods
-	containers := map[string][]a.Container{}
-	pods, err := c.client.CoreV1().Pods(ns).List(context.TODO(), metav1.ListOptions{})
-	//pod, err := c.client.CoreV1().Pods("monitoring").Get(context.TODO(), "prometheus",  metav1.GetOptions{})
-	if err != nil {
-		panic(err.Error())
+func (c *Collector) GetObjData(id string) (*[]interface{}, error) {
+	var res *[]interface{}
+	var err error
+	if id == "node" {
+		res, err = c.GetNodes()
+		return res, err
+
 	}
-	fmt.Printf("There are %d pods in the cluster\n", len(pods.Items))
+	if id == "pod" {
+		res, err = c.GetPods("monitoring")
+		return res, err
+	}
+	if id == "container" {
+		res, err = c.GetContainers("monitoring")
+		return res, err
+	}
+	if id == "deployment" {
+		res, err = c.GetDeployments("monitoring")
+	}
+	if id == "statefulset" {
+		res, err = c.GetStatefulsets("monitoring")
+	}
+	if id == "demonset" {
+		res, err = c.GetDaemonSets("monitoring")
+	}
+	if res == nil {
+		klog.Errorf("未知object id %v\n", id)
+	}
+	return nil, errors.New("未知object id")
+}
+
+func (c *Collector) GetPods(ns string) (*[]interface{}, error) {
+	var podList []interface{}
+	pods, err := c.client.CoreV1().Pods(ns).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
 
 	for _, item := range pods.Items {
 		data := PreparePodData(item)
-		podList = append(podList, data)
-
-		con := PrepareContainerData(item)
-		containers[item.Name] = *con
-		fmt.Printf("pod item:  %s\n", data)
+		podList = append(podList, *data)
 	}
 
-	return &podList, &containers
+	return &podList, nil
+}
+
+func (c *Collector) GetContainers(ns string) (*[]interface{}, error) {
+	var containers []interface{}
+	pods, err := c.client.CoreV1().Pods(ns).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, item := range pods.Items {
+		con := PrepareContainerData(item)
+		containers = append(containers, *con)
+	}
+
+	return &containers, nil
 }
 
 func (c *Collector) GetNamespaces() {
@@ -67,19 +106,67 @@ func (c *Collector) GetNamespaces() {
 
 }
 
-func (c *Collector) GetNodes() ([]*a.Node, error) {
+func (c *Collector) GetNodes() (*[]interface{}, error) {
 	nodes, err := c.client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
-	var nodeList []*a.Node
+	var nodeList []interface{}
 	for _, item := range nodes.Items {
 		node, err := PrepareNodeData(item)
 		if err != nil {
 			return nil, err
 		}
-		nodeList = append(nodeList, node)
+		nodeList = append(nodeList, *node)
 	}
 	if err != nil {
 		return nil, err
 	}
 	klog.Infof("There are %d nodes in the cluster\n", len(nodes.Items))
-	return nodeList, nil
+	return &nodeList, nil
+}
+
+func (c *Collector) GetStatefulsets(ns string) (*[]interface{}, error) {
+	sts, err := c.client.AppsV1().StatefulSets(ns).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	var stsList []interface{}
+	for _, item := range sts.Items {
+		sts, err := PrepareStsData(item)
+		if err != nil {
+			return nil, err
+		}
+		stsList = append(stsList, *sts)
+	}
+	return &stsList, nil
+}
+
+func (c *Collector) GetDeployments(ns string) (*[]interface{}, error) {
+	deploy, err := c.client.AppsV1().Deployments(ns).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	var deployList []interface{}
+	for _, item := range deploy.Items {
+		deploy, err := PrepareDeployData(item)
+		if err != nil {
+			return nil, err
+		}
+		deployList = append(deployList, *deploy)
+	}
+	return &deployList, nil
+}
+
+func (c *Collector) GetDaemonSets(ns string) (*[]interface{}, error) {
+	ds, err := c.client.AppsV1().DaemonSets(ns).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	var dsList []interface{}
+	for _, item := range ds.Items {
+		ds, err := PrepareDsData(item)
+		if err != nil {
+			return nil, err
+		}
+		dsList = append(dsList, *ds)
+	}
+	return &dsList, nil
 }

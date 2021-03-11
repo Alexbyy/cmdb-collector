@@ -68,7 +68,7 @@ func TestClient_GetAssociList(t *testing.T) {
 		klog.Infof("id: %s\n", id)
 		res, err := agent.DelAssoci(id)
 		klog.Infof("del result:%s\n", res["bk_error_msg"])
-		if err != nil{
+		if err != nil {
 			klog.Errorf("DElAssociList error: %v\n", err)
 		}
 	}
@@ -83,4 +83,3 @@ func TestClient_GetModels(t *testing.T) {
 	PrintJson(res)
 
 }
-

@@ -58,7 +58,7 @@ func (c *Client) AddInstance(method string, url string, body interface{}) (map[s
 	return res, nil
 }
 
-func (c *Client) InstAssoci(method string, url string, body map[string]interface{})(map[string]interface{}, error)  {
+func (c *Client) InstAssoci(method string, url string, body map[string]interface{}) (map[string]interface{}, error) {
 	ms, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
@@ -66,7 +66,7 @@ func (c *Client) InstAssoci(method string, url string, body map[string]interface
 	payload := bytes.NewBuffer([]byte(ms))
 	url = c.BaseUrl + url
 	req, err := http.NewRequest(method, url, payload)
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("Content-Type", c.ContentType)
@@ -91,7 +91,7 @@ func (c *Client) GetInstanceList(url string, body map[string]interface{}) (*inte
 	req.Header.Set("Content-Type", c.ContentType)
 	req.Header.Set("Cookie", c.CookieStr)
 	resp, err := c.HttpClient.Do(req)
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
@@ -108,7 +108,7 @@ func (c *Client) GetInstanceList(url string, body map[string]interface{}) (*inte
 
 }
 
-func (c *Client) GetAssociList(id string)(map[string]interface{}, error) {
+func (c *Client) GetAssociList(id string) (map[string]interface{}, error) {
 	body := map[string]interface{}{"bk_obj_asst_id": id}
 	ms, err := json.Marshal(body)
 	if err != nil {
@@ -120,7 +120,7 @@ func (c *Client) GetAssociList(id string)(map[string]interface{}, error) {
 	req.Header.Set("Content-Type", c.ContentType)
 	req.Header.Set("Cookie", c.CookieStr)
 	resp, err := c.HttpClient.Do(req)
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
@@ -138,7 +138,7 @@ func (c *Client) DelAssoci(id string) (map[string]interface{}, error) {
 	req.Header.Set("Content-Type", c.ContentType)
 	req.Header.Set("Cookie", c.CookieStr)
 	resp, err := c.HttpClient.Do(req)
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
@@ -150,13 +150,13 @@ func (c *Client) DelAssoci(id string) (map[string]interface{}, error) {
 }
 
 //获取所有模型内容
-func (c *Client) GetModels()(map[string]interface{}, error){
+func (c *Client) GetModels() (map[string]interface{}, error) {
 	url := c.BaseUrl + "/api/v3/find/classificationobject"
 	req, err := http.NewRequest("POST", url, nil)
 	req.Header.Set("Content-Type", c.ContentType)
 	req.Header.Set("Cookie", c.CookieStr)
 	resp, err := c.HttpClient.Do(req)
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
@@ -168,7 +168,7 @@ func (c *Client) GetModels()(map[string]interface{}, error){
 }
 
 //获取具体某个模型的所有关联
-func (c *Client) GetObjAssociation(name string)(map[string]interface{}, error){
+func (c *Client) GetObjAssociation(name string) (map[string]interface{}, error) {
 	body := map[string]interface{}{"bk_asst_obj_id": name}
 	ms, err := json.Marshal(body)
 	if err != nil {
@@ -180,7 +180,7 @@ func (c *Client) GetObjAssociation(name string)(map[string]interface{}, error){
 	req.Header.Set("Content-Type", c.ContentType)
 	req.Header.Set("Cookie", c.CookieStr)
 	resp, err := c.HttpClient.Do(req)
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
@@ -190,9 +190,6 @@ func (c *Client) GetObjAssociation(name string)(map[string]interface{}, error){
 	}
 	return res, nil
 }
-
-
-
 
 func ParseResponse(response *http.Response) (map[string]interface{}, error) {
 	var result map[string]interface{}
