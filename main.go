@@ -83,6 +83,7 @@ func main() {
 					//step5:遍历associRes建立实例间关系
 					associ1 := associRes1["data"].([]interface{})
 					associ2 := associRes2["data"].([]interface{})
+
 					if len(associ1) > 0 {
 						for _, item := range associ1 {
 							bkObjAsstId := item.(map[string]interface{})["bk_asst_obj_id"].(string)
@@ -123,10 +124,6 @@ func main() {
 									continue
 								}
 
-
-
-
-
 							}
 
 
@@ -134,7 +131,50 @@ func main() {
 						}
 					}
 					if len(associ2) > 0 {
+						for _, item := range associ2 {
+							bkObjAsstId := item.(map[string]interface{})["bk_asst_obj_id"].(string)
+							bkAsstObjId := item.(map[string]interface{})["bk_asst_obj_id"].(string)
+							if _, ok := a.Association[bkObjAsstId]; !ok{
+								klog.Errorf("没有配置实例关系如何配置：obj_item: %v;assObjId:%v; bk_obj_asst_id:%v\n", objId, bkAsstObjId, bkObjAsstId)
+								continue
+							}
 
+							res, err := agent.GetInstanceList(bkAsstObjId, nil)
+							if err != nil{
+								klog.Errorf("获取实例列表错误：%V\n", err)
+							}
+
+							for _, item := range (*res).([]interface{}) {
+								rule := a.Association[bkObjAsstId]
+								instanData := InstanceRes["data"].(map[string]interface{})
+
+								//先暂时默认都为string
+								temp1 := instanData[rule[objId]].(string)
+								temp2 := item.(map[string]interface{})[rule[bkObjAsstId]].(string)
+
+								if temp1 != temp2{
+									continue
+								}
+
+								//相等建立关联
+								var1 := item.(map[string]interface{})["bk_inst_id"].(float64)
+								var2 := instanData["bk_inst_id"].(float64)
+								body := map[string]interface{}{"bk_asst_inst_id": var1, "bk_inst_id": var2, "bk_obj_asst_id": bkObjAsstId}
+								res, err := agent.InstAssoci("POST", "/api/v3/create/instassociation", body)
+								if err != nil{
+									klog.Errorf("建立实例关系错误：err:%v; obj_item: %v;assObjId:%v; bk_obj_asst_id:%v\n",err, objId, bkAsstObjId, bkObjAsstId)
+									continue
+								}
+								if res["bk_error_msg"] != "success" {
+									klog.Errorf("建立实例关系错误： obj_item: %v;assObjId:%v; bk_obj_asst_id:%v\n", objId, bkAsstObjId, bkObjAsstId)
+									continue
+								}
+
+							}
+
+
+
+						}
 					}
 
 
