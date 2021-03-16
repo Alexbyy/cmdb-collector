@@ -324,7 +324,6 @@ func (c *Client) ClearData() error {
 			if len(instIds) == 0 {
 				continue
 			}
-
 			delInsts := DelInstances{Delete: InstIds{Instids: instIds}}
 			_, err1 := c.DelInstancesArray(objId, &delInsts)
 			if err1 != nil{
