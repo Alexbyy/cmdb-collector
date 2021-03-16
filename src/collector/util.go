@@ -77,6 +77,10 @@ func PrepareNodeData(item v1.Node) (*a.Node, error) {
 	for key, val := range item.Labels {
 		labels = labels + key + ":" + val + ";"
 	}
+	address := ""
+	for _, item := range item.Status.Addresses {
+		address = address + string(item.Type) + ":" + item.Address
+	}
 
 	node := a.Node{
 		Name:        item.Name,
@@ -84,43 +88,54 @@ func PrepareNodeData(item v1.Node) (*a.Node, error) {
 		NodePhase:   np,
 		Labels:      labels,
 		ClusterName: item.ClusterName,
+		IP:          address,
 	}
 	return &node, nil
 }
 
 func PrepareStsData(item app.StatefulSet) (*a.Statefulsets, error) {
+	sel := ""
+	for key, val := range item.Spec.Selector.MatchLabels {
+		sel = sel + key + ":" + val + ";"
+	}
 	sts := a.Statefulsets{
 		Name:            item.Name,
 		Id:              string(item.UID),
 		Namespace:       item.Namespace,
 		ServiceName:     item.Spec.ServiceName,
 		Replicas:        item.Status.Replicas,
-		ReadyReplicas:   item.Status.ReadyReplicas,
-		CurrentReplicas: item.Status.CurrentReplicas,
-		UpdatedReplicas: item.Status.UpdatedReplicas,
+		Selector:        sel,
+
 	}
 	return &sts, nil
 }
 
 func PrepareDeployData(item app.Deployment) (*a.Deployments, error) {
+	sel := ""
+	for key, val := range item.Spec.Selector.MatchLabels {
+		sel = sel + key + ":" + val + ";"
+	}
 	deploy := a.Deployments{
 		Name:                item.Name,
 		Id:                  string(item.UID),
 		Namespace:           item.Namespace,
 		Replicas:            item.Status.Replicas,
-		ReadyReplicas:       item.Status.ReadyReplicas,
-		UpdatedReplicas:     item.Status.UpdatedReplicas,
-		AvailableReplicas:   item.Status.AvailableReplicas,
-		UnavailableReplicas: item.Status.UnavailableReplicas,
+		Selector:        sel,
+
 	}
 	return &deploy, nil
 }
 
 func PrepareDsData(item app.DaemonSet) (*a.DaemonSets, error) {
+	sel := ""
+	for key, val := range item.Spec.Selector.MatchLabels {
+		sel = sel + key + ":" + val + ";"
+	}
 	ds := a.DaemonSets{
 		Name:      item.Name,
 		Id:        string(item.UID),
 		Namespace: item.Namespace,
+		Selector:        sel,
 	}
 	return &ds, nil
 }
