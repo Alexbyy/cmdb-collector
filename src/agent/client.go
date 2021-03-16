@@ -19,6 +19,32 @@ type Client struct {
 	objs        []map[string]string
 }
 
+//用于使用条件查询某个实例
+type Condition struct{
+	Condition map[string]interface{} `json:"condition"`
+}
+type  InstCondition struct {
+	Field string `json:"field"`
+	Operator string `json:"operator"`
+	Value  string `json:"value"`
+}
+
+//用于批量删除实例
+type InstIds struct {
+	Instids []int `json:"inst_ids"`
+}
+type DelInstances struct {
+	Delete InstIds `json:"delete"`
+}
+
+//type DelInstances struct {
+//	Delete struct {
+//		InstIds []int `json:"inst_ids"`
+//	} `json:"delete"`
+//}
+
+
+
 func NewClient(url string) *Client {
 	cookies := map[string]string{
 		"HTTP_BLUEKING_SUPPLIER_ID": "0",
@@ -44,7 +70,6 @@ func (c *Client) AddInstance(method string, url string, body interface{}) (map[s
 	payload := bytes.NewBuffer([]byte(ms))
 	url = c.BaseUrl + "/api/v3/create/instance/object/" + url
 	req, err := http.NewRequest(method, url, payload)
-	//fmt.Printf("body %v\n", req.Body)
 	req.Header.Set("Content-Type", c.ContentType)
 	req.Header.Set("Cookie", c.CookieStr)
 	resp, err := c.HttpClient.Do(req)
@@ -105,8 +130,77 @@ func (c *Client) GetInstanceList(objId string, body map[string]interface{}) (*in
 	d := res["data"].(map[string]interface{})["info"]
 
 	return &d, nil
+}
+
+func (c *Client) GetInstance(objId string, body *Condition)(map[string]interface{}, error){
+	ms, err := json.Marshal(*body)
+	if err != nil {
+		return nil, err
+	}
+	payload := bytes.NewBuffer([]byte(ms))
+	url := c.BaseUrl + "/api/v3/find/instassociation/object/" + objId
+	req, err := http.NewRequest("POST", url, payload)
+	req.Header.Set("Content-Type", c.ContentType)
+	req.Header.Set("Cookie", c.CookieStr)
+	resp, err := c.HttpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	res, err := ParseResponse(resp)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
 
 }
+
+func (c *Client) DelInstance(objId string, instId string)(map[string]interface{}, error) {
+
+	url := c.BaseUrl + "/api/v3/delete/instance/object/" + objId + "/inst/"+ instId
+	fmt.Printf("url: %s\n", url)
+	req, err := http.NewRequest("DELETE", url, nil)
+	req.Header.Set("Content-Type", c.ContentType)
+	req.Header.Set("Cookie", c.CookieStr)
+	resp, err := c.HttpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	res, err := ParseResponse(resp)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+
+}
+
+func (c *Client) DelInstancesArray(objId string, body *DelInstances)(map[string]interface{}, error){
+	ms, err := json.Marshal(*body)
+	if err != nil {
+		return nil, err
+	}
+	payload := bytes.NewBuffer([]byte(ms))
+	url := c.BaseUrl + "/api/v3/deletemany/instance/object/" + objId
+	req, err := http.NewRequest("DELETE", url, payload)
+
+	req.Header.Set("Content-Type", c.ContentType)
+	req.Header.Set("Cookie", c.CookieStr)
+	resp, err := c.HttpClient.Do(req)
+
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	res, err := ParseResponse(resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+//func (c *Client) GetInstance()
 
 func (c *Client) GetAssociList(id string) (map[string]interface{}, error) {
 	body := map[string]interface{}{"bk_obj_asst_id": id}
@@ -169,8 +263,8 @@ func (c *Client) GetModels() (map[string]interface{}, error) {
 
 //获取具体某个模型的所有关联
 func (c *Client) GetObjAssociation(name string) (map[string]interface{},map[string]interface{}, error) {
-	body1 := map[string]interface{}{"bk_asst_obj_id": name}
-	body2 := map[string]interface{}{"bk_obj_id": name}
+	body1 := map[string]interface{}{"condition": map[string]string{"bk_asst_obj_id": name}}
+	body2 := map[string]interface{}{"condition": map[string]string{"bk_obj_id": name}}
 	ms1, err := json.Marshal(body1)
 	ms2, err := json.Marshal(body2)
 	if err != nil {
@@ -178,7 +272,7 @@ func (c *Client) GetObjAssociation(name string) (map[string]interface{},map[stri
 	}
 	payload1 := bytes.NewBuffer([]byte(ms1))
 	payload2 := bytes.NewBuffer([]byte(ms2))
-	url := c.BaseUrl + "/api/v3/find/classificationobject"
+	url := c.BaseUrl + "/api/v3/find/objectassociation"
 	req1, err := http.NewRequest("POST", url, payload1)
 	req2, err := http.NewRequest("POST", url, payload2)
 	req1.Header.Set("Content-Type", c.ContentType)
@@ -200,6 +294,47 @@ func (c *Client) GetObjAssociation(name string) (map[string]interface{},map[stri
 	return res1, res2, nil
 }
 
+func (c *Client) ClearData() error {
+	//step1:获取Objects
+	objects, err := c.GetModels()
+	if err != nil {
+		return err
+	}
+	for _, value := range objects["data"].([]interface{}) {
+		//此id为模型分组id
+		classificationId := value.(map[string]interface{})["bk_classification_id"].(string)
+		if classificationId == "bk_host_manage" || classificationId == "bk_biz_topo" || classificationId == "bk_organization" || classificationId == "bk_network" {
+			continue
+		}
+		var instIds []int
+		//获取分组id下的object的数据
+		objects := value.(map[string]interface{})["bk_objects"].([]interface{})
+		for _, item := range objects {
+			objId := item.(map[string]interface{})["bk_obj_id"].(string)
+			res, err := c.GetInstanceList(objId, nil)
+			if err != nil {
+				return err
+			}
+
+			for _, item := range (*res).([]interface{}) {
+				bkInstId := int(item.(map[string]interface{})["bk_inst_id"].(float64))
+				instIds = append(instIds, bkInstId)
+
+			}
+			if len(instIds) == 0 {
+				continue
+			}
+
+			delInsts := DelInstances{Delete: InstIds{Instids: instIds}}
+			_, err1 := c.DelInstancesArray(objId, &delInsts)
+			if err1 != nil{
+				return err1
+			}
+		}
+	}
+	return nil
+}
+
 func ParseResponse(response *http.Response) (map[string]interface{}, error) {
 	var result map[string]interface{}
 	body, err := ioutil.ReadAll(response.Body)
@@ -209,6 +344,7 @@ func ParseResponse(response *http.Response) (map[string]interface{}, error) {
 
 	return result, err
 }
+
 
 //解析(map[string]interface{})数据格式并打印出数据
 func PrintJson(m map[string]interface{}) map[string]string {

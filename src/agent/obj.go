@@ -28,6 +28,7 @@ type Container struct {
 type Node struct {
 	Name        string `json:"bk_inst_name"`
 	Id          string `json:"icp_node_id"`
+	IP          string `json:"icp_node_ip"`
 	NodePhase   string `json:"icp_node_phase"`
 	Labels      string `json:"icp_node_labels"`
 	ClusterName string `json:"icp_node_cn"`
@@ -39,9 +40,10 @@ type Statefulsets struct {
 	Namespace       string `json:"icp_sts_ns"`
 	ServiceName     string `json:"icp_sts_sn"`
 	Replicas        int32  `json:"icp_sts_rp"`
-	ReadyReplicas   int32  `json:"icp_sts_rrp"`
-	CurrentReplicas int32  `json:"icp_sts_crp"`
-	UpdatedReplicas int32  `json:"icp_sts_urp"`
+	//ReadyReplicas   int32  `json:"icp_sts_rrp"`
+	//CurrentReplicas int32  `json:"icp_sts_crp"`
+	//UpdatedReplicas int32  `json:"icp_sts_urp"`
+	Selector        string	`json:"icp_sts_selector"`
 }
 
 type Deployments struct {
@@ -49,14 +51,16 @@ type Deployments struct {
 	Id                  string `json:"icp_deploy_id"`
 	Namespace           string `json:"icp_deploy_ns"`
 	Replicas            int32  `json:"icp_deploy_rp"`
-	UpdatedReplicas     int32  `json:"icp_deploy_urp"`
-	ReadyReplicas       int32  `json:"icp_deploy_rrp"`
-	AvailableReplicas   int32  `json:"icp_deploy_arp"`
-	UnavailableReplicas int32  `json:"icp_deploy_unrp"`
+	Selector        string	`json:"icp_deploy_selector"`
+	//UpdatedReplicas     int32  `json:"icp_deploy_urp"`
+	//ReadyReplicas       int32  `json:"icp_deploy_rrp"`
+	//AvailableReplicas   int32  `json:"icp_deploy_arp"`
+	//UnavailableReplicas int32  `json:"icp_deploy_unrp"`
 }
 
 type DaemonSets struct {
 	Name      string `json:"bk_inst_name"`
 	Id        string `json:"icp_ds_id"`
 	Namespace string `json:"icp_ds_ns"`
+	Selector        string	`json:"icp_ds_selector"`
 }
