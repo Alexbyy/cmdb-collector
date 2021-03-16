@@ -2,7 +2,7 @@ package agent
 
 type Pods struct {
 	Name        string `json:"bk_inst_name"`
-	Id          string `json:"icp_pod_id"`
+	Id          string `json:"id"`
 	Namespace   string `json:"icp_pod_namespace,omitempty"`
 	HostName    string `json:"icp_pod_hostname,omitempty"`
 	NodeName    string `json:"icp_pod_nodename,omitempty"`

@@ -257,18 +257,18 @@ func TestClient_InstAssoci(t *testing.T) {
 func TestClient_GetInstance(t *testing.T) {
 	fmt.Printf("dwadawdwadawdaw")
 	agent := NewClient("http://10.110.19.61:32033")
-	objId := "pod"
+	objId := "container"
 
 	instCon := InstCondition{
-		Field:    "icp_pod_id",
+		Field:    "icp_pod_name",
 		Operator: "$eq",
-		Value:    "1",
+		Value:    "alertmanager-2",
 	}
 	temp := []InstCondition{}
 	temp = append(temp, instCon)
 	condition := Condition{
 		Condition: map[string]interface{}{
-			"pod": temp,
+			"container": temp,
 		},
 	}
 	res, err := agent.GetInstance(objId, &condition)

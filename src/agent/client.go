@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"k8s.io/klog/v2"
 	"net/http"
 	"strconv"
 )
@@ -294,7 +295,82 @@ func (c *Client) GetObjAssociation(name string) (map[string]interface{},map[stri
 	return res1, res2, nil
 }
 
-func (c *Client) ClearData() error {
+func (c *Client) ClearAllAssociations() error{
+	//step1:获取Objects
+	objects, err := c.GetModels()
+	if err != nil {
+		return err
+	}
+	for _, value := range objects["data"].([]interface{}) {
+		//此id为模型分组id
+		classificationId := value.(map[string]interface{})["bk_classification_id"].(string)
+		if classificationId == "bk_host_manage" || classificationId == "bk_biz_topo" || classificationId == "bk_organization" || classificationId == "bk_network" {
+			continue
+		}
+
+		//获取分组id下的object的数据
+		objects := value.(map[string]interface{})["bk_objects"].([]interface{})
+		for _, item := range objects {
+			objId := item.(map[string]interface{})["bk_obj_id"].(string)
+			associRes1, associRes2, err := c.GetObjAssociation(objId)
+			if err != nil {
+				klog.Errorf("GetObjAssociation error: %v\n", err)
+				continue
+
+			}
+			if associRes1["bk_error_msg"] != "success" || associRes2["bk_error_msg"] != "success" {
+				klog.Errorf("GetObjAssociation  %v error, error info: %v;%v\n", item, associRes1["bk_error_msg"],associRes2["bk_error_msg"])
+				continue
+			}
+			//step5:遍历associRes建立实例间关系
+			associ1 := associRes1["data"].([]interface{})
+			if len(associ1) > 0 {
+				for _, item := range associ1 {
+					bkAsstObjId := item.(map[string]interface{})["bk_obj_asst_id"].(string)  //示例：ds_create_pod
+					res, err := c.GetAssociList(bkAsstObjId)
+					klog.Infof("Get Asslist result:%s\n", res["bk_error_msg"])
+					if err != nil {
+						klog.Errorf("GetAssociList error: %v\n", err)
+					}
+					for _, item := range res["data"].([]interface{}) {
+						id := strconv.Itoa(int(item.(map[string]interface{})["id"].(float64)))
+						klog.Infof("id: %s\n", id)
+						res, err := c.DelAssoci(id)
+						klog.Infof("del result:%s\n", res["bk_error_msg"])
+						if err != nil {
+							klog.Errorf("DElAssociList error: %v\n", err)
+						}
+					}
+
+				}
+			}
+
+			associ2 := associRes2["data"].([]interface{})
+			if len(associ2) > 0 {
+				for _, item := range associ2 {
+					bkAsstObjId := item.(map[string]interface{})["bk_obj_asst_id"].(string)  //示例：ds_create_pod
+					res, err := c.GetAssociList(bkAsstObjId)
+					klog.Infof("Get Asslist result:%s\n", res["bk_error_msg"])
+					if err != nil {
+						klog.Errorf("GetAssociList error: %v\n", err)
+					}
+					for _, item := range res["data"].([]interface{}) {
+						id := strconv.Itoa(int(item.(map[string]interface{})["id"].(float64)))
+						klog.Infof("id: %s\n", id)
+						res, err := c.DelAssoci(id)
+						klog.Infof("del result:%s\n", res["bk_error_msg"])
+						if err != nil {
+							klog.Errorf("DElAssociList error: %v\n", err)
+						}
+					}
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func (c *Client) ClearAllInstance() error {
 	//step1:获取Objects
 	objects, err := c.GetModels()
 	if err != nil {
