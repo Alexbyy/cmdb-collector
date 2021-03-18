@@ -1,0 +1,10 @@
+{
+  "AssociConfig": {
+    "pod_group_container": {"pod": "bk_inst_name", "container": "icp_pod_name", "operator": "$eq"},
+    "node_run_pod":         {"node": "bk_inst_name", "pod": "icp_pod_nodename", "operator": "$eq"},
+    "sts_create_pod":      {"sts": "bk_inst_name", "pod": "orn", "operator": "$eq"},
+    "ds_create_pod":      {"ds": "bk_inst_name", "pod": "orn", "operator": "$eq"},
+    "deploy_create_pod":   {"deploy": "bk_inst_name", "pod": "orn", "operator":"$eq"}
+
+  }
+}

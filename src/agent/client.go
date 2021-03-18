@@ -133,6 +133,7 @@ func (c *Client) GetInstanceList(objId string, body map[string]interface{}) (*in
 	return &d, nil
 }
 
+//Operator: 取值为：$regex $eq $ne
 func (c *Client) GetInstance(objId string, body *Condition)(map[string]interface{}, error){
 	ms, err := json.Marshal(*body)
 	if err != nil {
@@ -328,15 +329,12 @@ func (c *Client) ClearAllAssociations() error{
 				for _, item := range associ1 {
 					bkAsstObjId := item.(map[string]interface{})["bk_obj_asst_id"].(string)  //示例：ds_create_pod
 					res, err := c.GetAssociList(bkAsstObjId)
-					klog.Infof("Get Asslist result:%s\n", res["bk_error_msg"])
-					if err != nil {
+					if err != nil || res["bk_error_msg"] != "success"{
 						klog.Errorf("GetAssociList error: %v\n", err)
 					}
 					for _, item := range res["data"].([]interface{}) {
 						id := strconv.Itoa(int(item.(map[string]interface{})["id"].(float64)))
-						klog.Infof("id: %s\n", id)
-						res, err := c.DelAssoci(id)
-						klog.Infof("del result:%s\n", res["bk_error_msg"])
+						_, err := c.DelAssoci(id)
 						if err != nil {
 							klog.Errorf("DElAssociList error: %v\n", err)
 						}

@@ -14,4 +14,5 @@
 
 FROM registry-jinan-lab.inspurcloud.cn/library/os/inspur-alpine-3.10:5.0.0
 COPY ./app /app
+COPY ./config.json /config.json
 ENTRYPOINT /app

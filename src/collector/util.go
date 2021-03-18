@@ -14,10 +14,13 @@ func PreparePodData(item v1.Pod) *a.Pods {
 	}
 
 	//获取pod的workload:deployment\sts\ds etc
-	var kind string
-	if len(item.ObjectMeta.OwnerReferences) > 0 {
-		kind = item.ObjectMeta.OwnerReferences[0].Kind
+	var ownerReferencesName string
+	var ownerReferencesType string
+	if len(item.OwnerReferences) > 0{
+		ownerReferencesName = item.ObjectMeta.OwnerReferences[0].Name
+		ownerReferencesType = item.ObjectMeta.OwnerReferences[0].Kind
 	}
+
 	pod := a.Pods{
 		Name:        item.Name,
 		Id:          string(item.UID),
@@ -25,10 +28,11 @@ func PreparePodData(item v1.Pod) *a.Pods {
 		NodeName:    item.Spec.NodeName,
 		HostName:    item.Spec.Hostname,
 		ClusterName: item.ClusterName,
-		Kind:        kind,
 		Labels:      labelsStr,
 		Status:      string(item.Status.Phase),
 		PodIP:       item.Status.PodIP,
+		OwnerReferencesName: ownerReferencesName,
+		OwnerReferencesType: ownerReferencesType,
 	}
 
 	return &pod

@@ -7,10 +7,11 @@ type Pods struct {
 	HostName    string `json:"icp_pod_hostname,omitempty"`
 	NodeName    string `json:"icp_pod_nodename,omitempty"`
 	Labels      string `json:"icp_pod_labels,omitempty"`
-	Kind        string `json:"icp_pod_kind,omitempty"`
 	ClusterName string `json:"icp_pod_clustername,omitempty"`
 	Status      string `json:"icp_pod_status,omitempty"`
 	PodIP       string `json:"icp_pod_ip,omitempty"`
+	OwnerReferencesName string `json:"orn"`
+	OwnerReferencesType string `json:"ort"`
 }
 
 type Container struct {
