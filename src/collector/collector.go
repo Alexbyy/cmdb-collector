@@ -42,12 +42,13 @@ func (c *Collector) GetObjData(id string) (*[]interface{}, error) {
 		return r, err
 	}
 	if id == "pod" {
+		fmt.Printf("nm>>>>: %v\n", c.namespace)
 		for _, ns := range c.namespace {
 			r, err := c.GetPods(ns)
 			if err != nil{
 				return nil, err
 			}
-			res = append(res, *r)
+			res = append(res, *r...)
 		}
 
 		return &res, nil
@@ -58,7 +59,7 @@ func (c *Collector) GetObjData(id string) (*[]interface{}, error) {
 			if err != nil{
 				return nil, err
 			}
-			res = append(res, *r)
+			res = append(res, *r...)
 		}
 		return &res, nil
 
@@ -69,7 +70,7 @@ func (c *Collector) GetObjData(id string) (*[]interface{}, error) {
 			if err != nil{
 				return nil, err
 			}
-			res = append(res, *r)
+			res = append(res, *r...)
 		}
 		return &res, nil
 
@@ -80,7 +81,7 @@ func (c *Collector) GetObjData(id string) (*[]interface{}, error) {
 			if err != nil{
 				return nil, err
 			}
-			res = append(res, *r)
+			res = append(res, *r...)
 		}
 		return &res, nil
 	}
@@ -90,7 +91,7 @@ func (c *Collector) GetObjData(id string) (*[]interface{}, error) {
 			if err != nil{
 				return nil, err
 			}
-			res = append(res, *r)
+			res = append(res, *r...)
 		}
 		return &res, nil
 	}
@@ -158,7 +159,7 @@ func (c *Collector) GetNamespaces() {
 
 	for _, item := range ns.Items {
 		//fmt.Printf("namespace item: name: %s, spec: %s, status: %s\n", item.Name, item.Spec, item.Status)
-		_ = append(c.namespace, item.Name)
+		c.namespace = append(c.namespace,item.ObjectMeta.Name)
 	}
 
 }

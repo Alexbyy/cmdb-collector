@@ -72,7 +72,6 @@ func main() {
 				case nil:
 					continue
 				default:
-					fmt.Printf("类型为：%T\n", item)
 					InstanceRes, err := agent.AddInstance("POST", objId, item)
 					if err != nil || InstanceRes["bk_error_msg"] != "success"{
 						klog.Errorf("AddInstance error: %v,AddInstance result: %v\n", err, InstanceRes)
