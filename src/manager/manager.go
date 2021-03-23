@@ -4,7 +4,6 @@ import (
 	"cmdb-collector/src/agent"
 	"cmdb-collector/src/collector"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"k8s.io/klog/v2"
 	"strings"

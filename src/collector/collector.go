@@ -16,6 +16,9 @@ type Collector struct {
 }
 
 func NewCollector() *Collector {
+
+	c := &Collector{}
+
 	// creates the in-cluster config
 	config, err := rest.InClusterConfig()
 	if err != nil {
@@ -23,45 +26,75 @@ func NewCollector() *Collector {
 	}
 	// creates the clientset
 	clientset, err := kubernetes.NewForConfig(config)
+	c.client = clientset
+	c.GetNamespaces()
 	if err != nil {
 		panic(err.Error())
 	}
-	return &Collector{
-		client: clientset,
-	}
+	return c
 }
 
 func (c *Collector) GetObjData(id string) (*[]interface{}, error) {
-	var res *[]interface{}
-	var err error
-	if id == "node" {
-		res, err = c.GetNodes()
-		return res, err
+	var res []interface{}
 
+	if id == "node" {
+		r, err := c.GetNodes()
+		return r, err
 	}
 	if id == "pod" {
-		res, err = c.GetPods("monitoring")
-		return res, err
+		for _, ns := range c.namespace {
+			r, err := c.GetPods(ns)
+			if err != nil{
+				return nil, err
+			}
+			res = append(res, *r)
+		}
+
+		return &res, nil
 	}
 	if id == "container" {
-		res, err = c.GetContainers("monitoring")
-		return res, err
+		for _, ns := range c.namespace {
+			r, err := c.GetContainers(ns)
+			if err != nil{
+				return nil, err
+			}
+			res = append(res, *r)
+		}
+		return &res, nil
+
 	}
 	if id == "deploy" {
-		res, err = c.GetDeployments("monitoring")
-		return res, err
+		for _, ns := range c.namespace {
+			r, err := c.GetDeployments(ns)
+			if err != nil{
+				return nil, err
+			}
+			res = append(res, *r)
+		}
+		return &res, nil
+
 	}
 	if id == "sts" {
-		res, err = c.GetStatefulsets("monitoring")
-		return res, err
+		for _, ns := range c.namespace {
+			r, err := c.GetStatefulsets(ns)
+			if err != nil{
+				return nil, err
+			}
+			res = append(res, *r)
+		}
+		return &res, nil
 	}
 	if id == "ds" {
-		res, err = c.GetDaemonSets("monitoring")
-		return res, err
+		for _, ns := range c.namespace {
+			r, err := c.GetDaemonSets(ns)
+			if err != nil{
+				return nil, err
+			}
+			res = append(res, *r)
+		}
+		return &res, nil
 	}
-	if res == nil {
-		klog.Errorf("未知object id %v\n", id)
-	}
+
 	return nil, errors.New("未知object id")
 }
 
@@ -124,7 +157,8 @@ func (c *Collector) GetNamespaces() {
 	fmt.Printf("There are %d namespaces in the cluster\n", len(ns.Items))
 
 	for _, item := range ns.Items {
-		fmt.Printf("namespace item: name: %s, spec: %s, status: %s\n", item.Name, item.Spec, item.Status)
+		//fmt.Printf("namespace item: name: %s, spec: %s, status: %s\n", item.Name, item.Spec, item.Status)
+		_ = append(c.namespace, item.Name)
 	}
 
 }
