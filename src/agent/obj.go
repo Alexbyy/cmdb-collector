@@ -3,56 +3,63 @@ package agent
 type Pods struct {
 	Name        string `json:"bk_inst_name"`
 	Id          string `json:"id"`
-	Namespace   string `json:"icp_pod_namespace,omitempty"`
-	HostName    string `json:"icp_pod_hostname,omitempty"`
-	NodeName    string `json:"icp_pod_nodename,omitempty"`
-	Labels      string `json:"icp_pod_labels,omitempty"`
-	ClusterName string `json:"icp_pod_clustername,omitempty"`
-	Status      string `json:"icp_pod_status,omitempty"`
-	PodIP       string `json:"icp_pod_ip,omitempty"`
+	Namespace   string `json:"namespace,omitempty"`
+	HostName    string `json:"hostname,omitempty"`
+	NodeName    string `json:"nodename,omitempty"`
+	Labels      string `json:"labels,omitempty"`
+	ClusterName string `json:"clustername,omitempty"`
+	Status      string `json:"status,omitempty"`
+	PodIP       string `json:"ip,omitempty"`
 	OwnerReferencesName string `json:"orn"`
 	OwnerReferencesType string `json:"ort"`
+	NameWithNS  string  `json:"name_ns"`
+	//OrnWithNS   string  `json:"orn_ns"`
+	OrnId       string  `json:"orn_id"`
 }
 
 type Container struct {
 	Name          string `json:"bk_inst_name"`
-	Id            string `json:"icp_container_id"`
-	ContainerName string `json:"icp_container_name"`
-	PodName       string `json:"icp_pod_name"`
-	Image         string `json:"icp_container_image,omitempty"`
+	Id            string `json:"id"`
+	ContainerName string `json:"name"`
+	PodNameWithNS       string `json:"pod_name"`
+	Image         string `json:"image,omitempty"`
+	Namespace   string `json:"namespace,omitempty"`
 	//Command       string `json:"icp_container_comm,omitempty"`
 	//Args          string `json:"icp_container_args,omitempty"`
-	WorkingDir string `json:"icp_container_wd,omitempty"`
-	Ports      string `json:"icp_container_ports,omitempty"`
+	WorkingDir string `json:"wd,omitempty"`
+	Ports      string `json:"ports,omitempty"`
+
 }
 
 type Node struct {
 	Name        string `json:"bk_inst_name"`
-	Id          string `json:"icp_node_id"`
-	IP          string `json:"icp_node_ip"`
-	NodePhase   string `json:"icp_node_phase"`
-	Labels      string `json:"icp_node_labels"`
-	ClusterName string `json:"icp_node_cn"`
+	Id          string `json:"id"`
+	IP          string `json:"ip"`
+	NodePhase   string `json:"phase"`
+	Labels      string `json:"labels"`
+	ClusterName string `json:"cn"`
 }
 
 type Statefulsets struct {
 	Name            string `json:"bk_inst_name"`
-	Id              string `json:"icp_sts_id"`
-	Namespace       string `json:"icp_sts_ns"`
-	ServiceName     string `json:"icp_sts_sn"`
-	Replicas        int32  `json:"icp_sts_rp"`
+	Id              string `json:"id"`
+	Namespace       string `json:"ns"`
+	ServiceName     string `json:"sn"`
+	Replicas        int32  `json:"rp"`
 	//ReadyReplicas   int32  `json:"icp_sts_rrp"`
 	//CurrentReplicas int32  `json:"icp_sts_crp"`
 	//UpdatedReplicas int32  `json:"icp_sts_urp"`
-	Selector        string	`json:"icp_sts_selector"`
+	Selector        string	`json:"selector"`
+	NameWithNS  string  `json:"name_ns"`
 }
 
 type Deployments struct {
 	Name                string `json:"bk_inst_name"`
-	Id                  string `json:"icp_deploy_id"`
-	Namespace           string `json:"icp_deploy_ns"`
-	Replicas            int32  `json:"icp_deploy_rp"`
-	Selector        string	`json:"icp_deploy_selector"`
+	Id                  string `json:"id"`
+	Namespace           string `json:"ns"`
+	Replicas            int32  `json:"rp"`
+	Selector        string	`json:"selector"`
+	NameWithNS  string  `json:"name_ns"`
 	//UpdatedReplicas     int32  `json:"icp_deploy_urp"`
 	//ReadyReplicas       int32  `json:"icp_deploy_rrp"`
 	//AvailableReplicas   int32  `json:"icp_deploy_arp"`
@@ -61,7 +68,24 @@ type Deployments struct {
 
 type DaemonSets struct {
 	Name      string `json:"bk_inst_name"`
-	Id        string `json:"icp_ds_id"`
-	Namespace string `json:"icp_ds_ns"`
-	Selector        string	`json:"icp_ds_selector"`
+	Id        string `json:"id"`
+	Namespace string `json:"ns"`
+	Selector        string	`json:"selector"`
+	NameWithNS  string  `json:"name_ns"`
+}
+
+type ReplicaSet struct {
+	Name      string `json:"bk_inst_name"`
+	Id        string `json:"id"`
+	Namespace string `json:"ns"`
+	Replicas            int32  `json:"rp"`
+	Selector        string	`json:"selector"`
+	OwnerReferencesName string `json:"orn"`
+	OwnerReferencesType string `json:"ort"`
+	NameWithNS  string  `json:"name_ns"`
+	OrnWithNS   string  `json:"orn_ns"`
+	OrnId       string  `json:"orn_id"`
+
+
+
 }

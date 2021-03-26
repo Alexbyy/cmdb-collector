@@ -15,40 +15,30 @@ rules:
     resources:
       - events
       - pods
+      - namespaces
+      - nodes
+      - statefulsets
+      - deployments
+      - daemonsets
+      - replicasets
     verbs:
       - get
       - list
       - watch
-      - create
-      - update
-      - patch
-      - delete
   - apiGroups:
       - apps
     resources:
       - deployments
       - events
+      - statefulsets
+      - daemonsets
+      - replicasets
     verbs:
       - get
       - list
       - watch
-      - create
-      - update
-      - patch
-      - delete
-  - apiGroups:
-      - ""
-    resources:
-      - configmaps
-      - namespaces
-    verbs:
-      - get
-      - list
-      - watch
-      - create
-      - update
-      - patch
-      - delete
+
+
 
 
 ---

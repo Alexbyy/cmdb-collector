@@ -1,10 +1,12 @@
 {
   "AssociConfig": {
-    "pod_group_container": {"pod": "bk_inst_name", "container": "icp_pod_name", "operator": "$eq"},
-    "node_run_pod":         {"node": "bk_inst_name", "pod": "icp_pod_nodename", "operator": "$eq"},
-    "sts_create_pod":      {"sts": "bk_inst_name", "pod": "orn", "operator": "$eq"},
-    "ds_create_pod":      {"ds": "bk_inst_name", "pod": "orn", "operator": "$eq"},
-    "deploy_create_pod":   {"deploy": "bk_inst_name", "pod": "orn", "operator":"$eq"}
+    "pod_group_container": {"pod": "name_ns", "container": "pod_name", "operator": "$eq"},
+    "node_run_pod":         {"node": "bk_inst_name", "pod": "nodename", "operator": "$eq"},
+    "sts_create_pod":      {"sts": "id", "pod": "orn_id", "operator": "$eq"},
+    "ds_create_pod":      {"ds": "id", "pod": "orn_id", "operator": "$eq"},
+    "deploy_create_pod":   {"deploy": "id", "pod": "orn_id", "operator":"$eq"},
+    "rc_create_pod":      {"rc":  "id", "pod":  "orn_id", "operator":  "$eq"},
+    "deploy_create_rc":  {"deploy": "id", "rc":  "orn_id", "operator":  "$eq"}
 
   }
 }

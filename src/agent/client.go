@@ -348,7 +348,6 @@ func (c *Client) ClearAllAssociations() error{
 				for _, item := range associ2 {
 					bkAsstObjId := item.(map[string]interface{})["bk_obj_asst_id"].(string)  //示例：ds_create_pod
 					res, err := c.GetAssociList(bkAsstObjId)
-					klog.Infof("Get Asslist result:%s\n", res["bk_error_msg"])
 					if err != nil {
 						klog.Errorf("GetAssociList error: %v\n", err)
 					}

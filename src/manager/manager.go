@@ -66,7 +66,15 @@ func  (m *Manager) BuildAssociation(instanceData *map[string]interface{}, associ
 			instanData := (*instanceData)["data"].(map[string]interface{})
 			rule := m.Config.AssociConfig[bkAsstObjId]
 
-			temp1 := instanData[rule[objId]].(string)
+			temp1 := ""
+			if _, ok := instanData[rule[objId]]; ok {
+				//存在
+				temp1 = instanData[rule[objId]].(string)
+			}else {
+				klog.Errorf("实例的维护关系key不存在，objId：%v,rule[objId]:%v,instanData:%v\n", objId, rule[objId], instanceData)
+				continue
+			}
+
 			instCon := agent.InstCondition{
 				Field:    rule[bkObjAsstId],
 				Operator: "$eq",

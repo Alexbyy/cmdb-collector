@@ -16,9 +16,11 @@ func PreparePodData(item v1.Pod) *a.Pods {
 	//获取pod的workload:deployment\sts\ds etc
 	var ownerReferencesName string
 	var ownerReferencesType string
+	var ordId string
 	if len(item.OwnerReferences) > 0{
 		ownerReferencesName = item.ObjectMeta.OwnerReferences[0].Name
 		ownerReferencesType = item.ObjectMeta.OwnerReferences[0].Kind
+		ordId               = string(item.ObjectMeta.OwnerReferences[0].UID)
 	}
 
 	pod := a.Pods{
@@ -33,6 +35,9 @@ func PreparePodData(item v1.Pod) *a.Pods {
 		PodIP:       item.Status.PodIP,
 		OwnerReferencesName: ownerReferencesName,
 		OwnerReferencesType: ownerReferencesType,
+		NameWithNS:  item.Name + "_" + item.Namespace,
+		//OrnWithNS:   ownerReferencesName + "_" + item.Namespace,
+		OrnId:       ordId,
 	}
 
 	return &pod
@@ -63,8 +68,9 @@ func PrepareContainerData(item v1.Pod) *[]a.Container {
 			Name:          c.Name,
 			Id:            c.Name + "_" + string(item.UID),
 			ContainerName: c.Name,
-			PodName:       item.Name,
+			PodNameWithNS:       item.Name + "_" + item.Namespace,
 			Image:         c.Image,
+			Namespace:     item.Namespace,
 			//Command:       command,
 			//Args:          arg,
 			WorkingDir: c.WorkingDir,
@@ -109,6 +115,7 @@ func PrepareStsData(item app.StatefulSet) (*a.Statefulsets, error) {
 		ServiceName:     item.Spec.ServiceName,
 		Replicas:        item.Status.Replicas,
 		Selector:        sel,
+		NameWithNS:  item.Name + "_" + item.Namespace,
 
 	}
 	return &sts, nil
@@ -125,6 +132,7 @@ func PrepareDeployData(item app.Deployment) (*a.Deployments, error) {
 		Namespace:           item.Namespace,
 		Replicas:            item.Status.Replicas,
 		Selector:        sel,
+		NameWithNS:  item.Name + "_" + item.Namespace,
 
 	}
 	return &deploy, nil
@@ -140,6 +148,36 @@ func PrepareDsData(item app.DaemonSet) (*a.DaemonSets, error) {
 		Id:        string(item.UID),
 		Namespace: item.Namespace,
 		Selector:        sel,
+		NameWithNS:  item.Name + "_" + item.Namespace,
 	}
 	return &ds, nil
 }
+
+func PrepareRCData(item app.ReplicaSet) (*a.ReplicaSet, error) {
+	sel := ""
+	for key, val := range item.Spec.Selector.MatchLabels {
+		sel = sel + key + ":" + val + ";"
+	}
+	var ownerReferencesName string
+	var ownerReferencesType string
+	var ordId string
+	if len(item.OwnerReferences) > 0{
+		ownerReferencesName = item.ObjectMeta.OwnerReferences[0].Name
+		ownerReferencesType = item.ObjectMeta.OwnerReferences[0].Kind
+		ordId               = string(item.ObjectMeta.OwnerReferences[0].UID)
+	}
+	rc := a.ReplicaSet{
+		Name:      item.Name,
+		Id:        string(item.UID),
+		Namespace: item.Namespace,
+		Selector:        sel,
+		Replicas:  *item.Spec.Replicas,
+		NameWithNS:  item.Name + "_" + item.Namespace,
+		OwnerReferencesName: ownerReferencesName,
+		OwnerReferencesType: ownerReferencesType,
+		OrnId: ordId,
+
+	}
+	return &rc, nil
+}
+

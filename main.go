@@ -31,10 +31,13 @@ func main() {
 	}
 
 	//清理旧实例
+	klog.V(2).Infof("Cleaning old data》》》》》》》》》》》》》》")
 	err = agent.ClearAllAssociations()
 	err = agent.ClearAllInstance()
 	if err != nil{
 		klog.Fatalf("清理旧数据发生错误： %v\n", err)
+	}else {
+		klog.V(2).Infof("Cleaning old data done")
 	}
 
 	//step1:获取Objects
@@ -74,7 +77,7 @@ func main() {
 				default:
 					InstanceRes, err := agent.AddInstance("POST", objId, item)
 					if err != nil || InstanceRes["bk_error_msg"] != "success"{
-						klog.Errorf("AddInstance error: %v,AddInstance result: %v\n", err, InstanceRes)
+						klog.Errorf("AddInstance error: %v,AddInstance result: %v, objId: %v, data: %v\n", err, InstanceRes, objId, item)
 						continue
 					}
 

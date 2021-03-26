@@ -95,6 +95,17 @@ func (c *Collector) GetObjData(id string) (*[]interface{}, error) {
 		}
 		return &res, nil
 	}
+	if id == "rc"{
+		for _, ns := range c.namespace{
+			r, err := c.GetReplicaSets(ns)
+			if err != nil{
+				return nil, err
+			}
+			res = append(res, *r...)
+
+		}
+		return &res, nil
+	}
 
 	return nil, errors.New("未知object id")
 }
@@ -211,4 +222,20 @@ func (c *Collector) GetDaemonSets(ns string) (*[]interface{}, error) {
 		dsList = append(dsList, *ds)
 	}
 	return &dsList, nil
+}
+
+func (c *Collector) GetReplicaSets(ns string) (*[]interface{}, error) {
+	rc, err := c.client.AppsV1().ReplicaSets(ns).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	var list []interface{}
+	for _, item := range rc.Items {
+		rc, err := PrepareRCData(item)
+		if err != nil {
+			return nil, err
+		}
+		list = append(list, *rc)
+	}
+	return &list, nil
 }
