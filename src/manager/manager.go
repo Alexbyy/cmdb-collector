@@ -41,6 +41,7 @@ func NewManager(a *agent.Client, opts *options.Options)(*Manager, error)  {
 
 func (m *Manager) Start(){
 	//获取集群信息
+	klog.Infof("Get k8s config》》》》》》》》》》》》》》")
 	k8s, err := getK8s(m.Options)
 	if err != nil {
 		klog.Errorf("获取k8s信息出错:%v\n", err)
@@ -50,7 +51,7 @@ func (m *Manager) Start(){
 
 
 	//清理旧实例
-	klog.V(2).Infof("Cleaning old data》》》》》》》》》》》》》》")
+	klog.Infof("Cleaning old data》》》》》》》》》》》》》》")
 	err = m.Agent.ClearAllAssociations()
 	err = m.Agent.ClearAllInstance()
 	if err != nil{
@@ -60,11 +61,13 @@ func (m *Manager) Start(){
 	}
 
 	//step1:获取Objects
+	klog.Infof("get objects》》》》》》》》》》》》》》")
 	objects, err := m.Agent.GetModels()
 	if err != nil {
 		klog.Fatalf("get Objects error: v%\n", err)
 	}
 
+	klog.Infof("一共有%v个集群", len(*k8s))
 	for i := 0; i < len(*k8s); i++ {
 		fmt.Printf("启动线程：%v\n", i)
 		config := ((*k8s)[i]).(map[string]interface{})
@@ -75,11 +78,12 @@ func (m *Manager) Start(){
 func (m *Manager) Run(config map[string]interface{}, objects  map[string]interface{})  {
 	collector, err := collector.NewCollector(m.Options, config)
 	if err != nil {
-		fmt.Errorf("创建collector 报错： %v\n", err)
+		klog.Errorf("创建collector 报错： %v\n", err)
 		return
 	}
 
 	//step2:遍历获取到的objects
+	klog.Infof("遍历objects》》》》》》》》》》》》")
 	for _, value := range objects["data"].([]interface{}) {
 		//此id为模型分组id
 		classificationId := value.(map[string]interface{})["bk_classification_id"].(string)

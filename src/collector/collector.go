@@ -27,11 +27,15 @@ type Collector struct {
 func NewCollector(opts *options.Options, k8s map[string]interface{}) (*Collector, error) {
 
 	c := &Collector{}
+
 	config := rest.Config{
 		Host:                k8s["server"].(string),
 		BearerToken:         k8s["token"].(string),
+		TLSClientConfig:     rest.TLSClientConfig{
+			Insecure: true,
+		},
 	}
-	fmt.Printf("config>>>>>>>: %v\n", config)
+	klog.Infof("config>>>>>>>: %v\n", config)
 	// creates the in-cluster config
 	//config, err := rest.InClusterConfig()
 	// creates the clientset
@@ -40,7 +44,10 @@ func NewCollector(opts *options.Options, k8s map[string]interface{}) (*Collector
 		return nil, err
 	}
 	c.client = clientset
-	c.GetNamespaces()
+	err = c.GetNamespaces()
+	if err != nil {
+		return nil,err
+	}
 	c.options = opts
 	c.HttpClient = &http.Client{}
 	return c, nil
@@ -172,11 +179,11 @@ func (c *Collector) GetContainers(ns string) (*[]interface{}, error) {
 	return &containers, nil
 }
 
-func (c *Collector) GetNamespaces() {
+func (c *Collector) GetNamespaces() error{
 	ns, err := c.client.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
 
 	if err != nil {
-		panic(err.Error())
+		return err
 	}
 	fmt.Printf("There are %d namespaces in the cluster\n", len(ns.Items))
 
@@ -184,6 +191,7 @@ func (c *Collector) GetNamespaces() {
 		//fmt.Printf("namespace item: name: %s, spec: %s, status: %s\n", item.Name, item.Spec, item.Status)
 		c.namespace = append(c.namespace,item.ObjectMeta.Name)
 	}
+	return nil
 
 }
 
