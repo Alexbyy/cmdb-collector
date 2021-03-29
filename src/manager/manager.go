@@ -3,6 +3,7 @@ package manager
 import (
 	"cmdb-collector/src/agent"
 	"cmdb-collector/src/collector"
+	"cmdb-collector/src/options"
 	"encoding/json"
 	"io/ioutil"
 	"k8s.io/klog/v2"
@@ -22,8 +23,8 @@ type InitParams struct {
 	ConfigPath string
 }
 
-func NewManager(a *agent.Client, c *collector.Collector, params *InitParams)(*Manager, error)  {
-	res, err := ReadFromJson(params.ConfigPath)
+func NewManager(a *agent.Client, c *collector.Collector, opts *options.Options)(*Manager, error)  {
+	res, err := ReadFromJson(opts.ConfigPath)
 	if err != nil {
 		return nil, err
 	}

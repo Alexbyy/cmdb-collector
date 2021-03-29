@@ -1,21 +1,30 @@
 package collector
 
 import (
+	"cmdb-collector/src/options"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
+	"net/http"
 )
 
 type Collector struct {
 	namespace []string
+	ContentType string
 	client    *kubernetes.Clientset
+	options *options.Options
+	HttpClient  *http.Client
+
 }
 
-func NewCollector() *Collector {
+
+func NewCollector(opts *options.Options) *Collector {
 
 	c := &Collector{}
 
@@ -27,7 +36,9 @@ func NewCollector() *Collector {
 	// creates the clientset
 	clientset, err := kubernetes.NewForConfig(config)
 	c.client = clientset
+	c.options = opts
 	c.GetNamespaces()
+	c.HttpClient = &http.Client{}
 	if err != nil {
 		panic(err.Error())
 	}
@@ -238,4 +249,32 @@ func (c *Collector) GetReplicaSets(ns string) (*[]interface{}, error) {
 		list = append(list, *rc)
 	}
 	return &list, nil
+}
+
+//func (c *Collector) GetK8s()(*[]interface{},error)  {
+//
+//	url := c.options.LcmBaseUrl +  "/lcm/v1/sites/" + c.options.LcmSite + "/branches/" + c.options.LcmBranch + "/kuberneteses"
+//	req, err := http.NewRequest("POST", url, nil)
+//	if err != nil {
+//		return nil, err
+//	}
+//	req.Header.Set("Content-Type", c.ContentType)
+//	resp, err := c.HttpClient.Do(req)
+//	defer resp.Body.Close()
+//	res, err := ParseResponse(resp)
+//	if err != nil {
+//		return nil, err
+//	}
+//	return res, nil
+//
+//}
+
+func ParseResponse(response *http.Response) (map[string]interface{}, error) {
+	var result map[string]interface{}
+	body, err := ioutil.ReadAll(response.Body)
+	if err == nil {
+		err = json.Unmarshal(body, &result)
+	}
+
+	return result, err
 }

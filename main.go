@@ -4,28 +4,26 @@ import (
 	a "cmdb-collector/src/agent"
 	c "cmdb-collector/src/collector"
 	m "cmdb-collector/src/manager"
-	"flag"
+	"cmdb-collector/src/options"
 	"fmt"
 	"k8s.io/klog/v2"
 	"time"
 )
 
-var configPath = flag.String("config_path", "/config.json", "The path of config file")
-
 
 
 
 func main() {
-	klog.InitFlags(nil)
-	defer klog.Flush()
-	flag.Parse()
-	initParams := m.InitParams{
-		ConfigPath: *configPath,
+	opts := options.NewOptions()
+	opts.AddFlags()
+	err := opts.Parse()
+	if err != nil {
+		klog.Fatalf("Error: %s", err)
 	}
 
-	collector := c.NewCollector()
+	collector := c.NewCollector(opts)
 	agent := a.NewClient("http://10.110.19.61:32033")
-	manager, err := m.NewManager(agent, collector, &initParams)
+	manager, err := m.NewManager(agent, collector, opts)
 	if err != nil {
 		klog.Fatalf("初始化NewManager报错:%v\n", err)
 	}
