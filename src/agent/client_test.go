@@ -175,7 +175,7 @@ func TestClient_DelInstanceList(t *testing.T) {
 }
 
 
-//获取所有实例并批量删除该实例
+//T
 func TestClient_DelInstanceBatch(t *testing.T) {
 	agent := NewClient("http://10.110.19.61:32033")
 

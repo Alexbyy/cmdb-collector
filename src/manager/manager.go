@@ -5,15 +5,18 @@ import (
 	"cmdb-collector/src/collector"
 	"cmdb-collector/src/options"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"k8s.io/klog/v2"
+	"net/http"
 	"strings"
 )
 
 type Manager struct {
 	Agent *agent.Client
-	Collector *collector.Collector
-	Config *Config
+	Config *Config //建立关系的配置文件
+	Options  *options.Options
+
 }
 
 type Config struct {
@@ -23,17 +26,113 @@ type InitParams struct {
 	ConfigPath string
 }
 
-func NewManager(a *agent.Client, c *collector.Collector, opts *options.Options)(*Manager, error)  {
+func NewManager(a *agent.Client, opts *options.Options)(*Manager, error)  {
 	res, err := ReadFromJson(opts.ConfigPath)
 	if err != nil {
 		return nil, err
 	}
 	return &Manager{
 		Agent: a,
-		Collector: c,
 		Config: res,
+		Options: opts,
 
 	}, nil
+}
+
+func (m *Manager) Start(){
+	//获取集群信息
+	k8s, err := getK8s(m.Options)
+	if err != nil {
+		klog.Errorf("获取k8s信息出错:%v\n", err)
+		return
+	}
+	m.Options.K8s = k8s
+
+
+	//清理旧实例
+	klog.V(2).Infof("Cleaning old data》》》》》》》》》》》》》》")
+	err = m.Agent.ClearAllAssociations()
+	err = m.Agent.ClearAllInstance()
+	if err != nil{
+		klog.Fatalf("清理旧数据发生错误： %v\n", err)
+	}else {
+		klog.V(2).Infof("Cleaning old data done")
+	}
+
+	//step1:获取Objects
+	objects, err := m.Agent.GetModels()
+	if err != nil {
+		klog.Fatalf("get Objects error: v%\n", err)
+	}
+
+	for i := 0; i < len(*k8s); i++ {
+		config := ((*k8s)[i]).(map[string]string)
+		go m.Run(config, objects)
+	}
+}
+
+func (m *Manager) Run(config map[string]string, objects  map[string]interface{})  {
+	collector, err := collector.NewCollector(m.Options, config)
+	if err != nil {
+		fmt.Errorf("创建collector 报错： %v\n", err)
+		return
+	}
+
+	//step2:遍历获取到的objects
+	for _, value := range objects["data"].([]interface{}) {
+		//此id为模型分组id
+		classificationId := value.(map[string]interface{})["bk_classification_id"].(string)
+		if classificationId == "bk_host_manage" || classificationId == "bk_biz_topo" || classificationId == "bk_organization" || classificationId == "bk_network" {
+			continue
+		}
+
+
+		//获取分组id下的object的数据
+		objects := value.(map[string]interface{})["bk_objects"].([]interface{})
+		if len(objects) == 0 {
+			continue
+		}
+		for _, item := range objects {
+			objId := item.(map[string]interface{})["bk_obj_id"].(string)
+			data, err := collector.GetObjData(objId)
+			if err != nil || data == nil || len(*data) == 0{
+				klog.Errorf("获取object数据:%v 错误：%v, 获取结果： %v\n", objId, err, data)
+				continue
+			}
+
+			//step3：遍历data，创建实例
+			for _, item := range *data {
+
+				switch item := item.(type) {
+				case nil:
+					continue
+				default:
+					InstanceRes, err := m.Agent.AddInstance("POST", objId, item)
+					if err != nil || InstanceRes["bk_error_msg"] != "success"{
+						klog.Errorf("AddInstance error: %v,AddInstance result: %v, objId: %v, data: %v\n", err, InstanceRes, objId, item)
+						continue
+					}
+
+					//step4：已成功创建实例，这一步获取obj_item的关系
+					associRes1, associRes2, err := m.Agent.GetObjAssociation(objId)
+					if err != nil || associRes1["bk_error_msg"] != "success" || associRes2["bk_error_msg"] != "success" {
+						klog.Errorf("GetObjAssociation error: %v\n", err)
+						klog.Errorf("GetObjAssociation  %v error, error info: %v;%v\n", item, associRes1["bk_error_msg"],associRes2["bk_error_msg"])
+						continue
+
+					}
+
+					//step5:遍历associRes建立实例间关系
+					associ1 := associRes1["data"].([]interface{})
+					associ2 := associRes2["data"].([]interface{})
+					m.BuildAssociation(&InstanceRes, &associ1, objId)
+					m.BuildAssociation(&InstanceRes, &associ2, objId)
+					//fmt.Printf("associ1 len: %v;associ2 len :%v\n", len(associ1), len(associ2))
+				}
+			}
+		}
+	}
+
 }
 
 //建立管理
@@ -134,5 +233,27 @@ func ReadFromJson(src string)(*Config, error){
 		return nil, err
 	}
 	return config, nil
+}
+
+func getK8s(opts *options.Options)(*[]interface{},error)  {
+	var res []interface{}
+	client := &http.Client{}
+	url := opts.LcmBaseUrl +  "/lcm/v1/sites/" + opts.LcmSite + "/branches/" + opts.LcmBranch + "/kuberneteses"
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	//req.Header.Set("Content-Type", c.ContentType)
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil{
+		return nil, err
+	}
+	json.Unmarshal(body, &res)
+	return &res, nil
 }
 

@@ -13,6 +13,7 @@ type Options struct {
 	LcmBaseUrl string
 	LcmBranch string
 	LcmSite string
+	K8s     *[]interface{}
 
 	flags *pflag.FlagSet
 }

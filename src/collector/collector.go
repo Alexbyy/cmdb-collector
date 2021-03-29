@@ -24,25 +24,26 @@ type Collector struct {
 }
 
 
-func NewCollector(opts *options.Options) *Collector {
+func NewCollector(opts *options.Options, k8s map[string]string) (*Collector, error) {
 
 	c := &Collector{}
 
+	config := rest.Config{
+		Host:                k8s["server"],
+		BearerToken:         k8s["token"],
+	}
 	// creates the in-cluster config
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		panic(err.Error())
-	}
+	//config, err := rest.InClusterConfig()
 	// creates the clientset
-	clientset, err := kubernetes.NewForConfig(config)
-	c.client = clientset
-	c.options = opts
-	c.GetNamespaces()
-	c.HttpClient = &http.Client{}
+	clientset, err := kubernetes.NewForConfig(&config)
 	if err != nil {
-		panic(err.Error())
+		return nil, err
 	}
-	return c
+	c.client = clientset
+	c.GetNamespaces()
+	c.options = opts
+	c.HttpClient = &http.Client{}
+	return c, nil
 }
 
 func (c *Collector) GetObjData(id string) (*[]interface{}, error) {
@@ -251,23 +252,6 @@ func (c *Collector) GetReplicaSets(ns string) (*[]interface{}, error) {
 	return &list, nil
 }
 
-//func (c *Collector) GetK8s()(*[]interface{},error)  {
-//
-//	url := c.options.LcmBaseUrl +  "/lcm/v1/sites/" + c.options.LcmSite + "/branches/" + c.options.LcmBranch + "/kuberneteses"
-//	req, err := http.NewRequest("POST", url, nil)
-//	if err != nil {
-//		return nil, err
-//	}
-//	req.Header.Set("Content-Type", c.ContentType)
-//	resp, err := c.HttpClient.Do(req)
-//	defer resp.Body.Close()
-//	res, err := ParseResponse(resp)
-//	if err != nil {
-//		return nil, err
-//	}
-//	return res, nil
-//
-//}
 
 func ParseResponse(response *http.Response) (map[string]interface{}, error) {
 	var result map[string]interface{}
