@@ -66,12 +66,13 @@ func (m *Manager) Start(){
 	}
 
 	for i := 0; i < len(*k8s); i++ {
-		config := ((*k8s)[i]).(map[string]string)
+		fmt.Printf("启动线程：%v\n", i)
+		config := ((*k8s)[i]).(map[string]interface{})
 		go m.Run(config, objects)
 	}
 }
 
-func (m *Manager) Run(config map[string]string, objects  map[string]interface{})  {
+func (m *Manager) Run(config map[string]interface{}, objects  map[string]interface{})  {
 	collector, err := collector.NewCollector(m.Options, config)
 	if err != nil {
 		fmt.Errorf("创建collector 报错： %v\n", err)

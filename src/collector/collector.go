@@ -24,14 +24,14 @@ type Collector struct {
 }
 
 
-func NewCollector(opts *options.Options, k8s map[string]string) (*Collector, error) {
+func NewCollector(opts *options.Options, k8s map[string]interface{}) (*Collector, error) {
 
 	c := &Collector{}
-
 	config := rest.Config{
-		Host:                k8s["server"],
-		BearerToken:         k8s["token"],
+		Host:                k8s["server"].(string),
+		BearerToken:         k8s["token"].(string),
 	}
+	fmt.Printf("config>>>>>>>: %v\n", config)
 	// creates the in-cluster config
 	//config, err := rest.InClusterConfig()
 	// creates the clientset
