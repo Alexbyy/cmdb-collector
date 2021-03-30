@@ -15,6 +15,7 @@ type Pods struct {
 	NameWithNS  string  `json:"name_ns"`
 	//OrnWithNS   string  `json:"orn_ns"`
 	OrnId       string  `json:"orn_id"`
+	K8sName string `json:"k8s_name"`
 }
 
 type Container struct {
@@ -28,6 +29,7 @@ type Container struct {
 	//Args          string `json:"icp_container_args,omitempty"`
 	WorkingDir string `json:"wd,omitempty"`
 	Ports      string `json:"ports,omitempty"`
+	K8sName string `json:"k8s_name"`
 
 }
 
@@ -38,6 +40,7 @@ type Node struct {
 	NodePhase   string `json:"phase"`
 	Labels      string `json:"labels"`
 	ClusterName string `json:"cn"`
+	K8sName string `json:"k8s_name"`
 }
 
 type Statefulsets struct {
@@ -51,6 +54,7 @@ type Statefulsets struct {
 	//UpdatedReplicas int32  `json:"icp_sts_urp"`
 	Selector        string	`json:"selector"`
 	NameWithNS  string  `json:"name_ns"`
+	K8sName string `json:"k8s_name"`
 }
 
 type Deployments struct {
@@ -60,6 +64,7 @@ type Deployments struct {
 	Replicas            int32  `json:"rp"`
 	Selector        string	`json:"selector"`
 	NameWithNS  string  `json:"name_ns"`
+	K8sName string `json:"k8s_name"`
 	//UpdatedReplicas     int32  `json:"icp_deploy_urp"`
 	//ReadyReplicas       int32  `json:"icp_deploy_rrp"`
 	//AvailableReplicas   int32  `json:"icp_deploy_arp"`
@@ -72,6 +77,7 @@ type DaemonSets struct {
 	Namespace string `json:"ns"`
 	Selector        string	`json:"selector"`
 	NameWithNS  string  `json:"name_ns"`
+	K8sName string `json:"k8s_name"`
 }
 
 type ReplicaSet struct {
@@ -85,7 +91,17 @@ type ReplicaSet struct {
 	NameWithNS  string  `json:"name_ns"`
 	OrnWithNS   string  `json:"orn_ns"`
 	OrnId       string  `json:"orn_id"`
+	K8sName string `json:"k8s_name"`
+}
 
+type App struct {
+	Name string `json:"bk_inst_name"`
+	ReleaseName string `json:"release_name"`
+	NameSpace   string `json:"ns"`
+	K8sName string `json:"k8s_name"`
+	AppGroup string `json:"app_group"`
+}
 
-
+type AppGroup struct {
+	Name string `json:"bk_inst_name"`
 }
