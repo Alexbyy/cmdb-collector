@@ -71,6 +71,7 @@ func (m *Manager) Start(){
 	for i := 0; i < len(*k8s); i++ {
 		fmt.Printf("启动线程：%v\n", i)
 		config := ((*k8s)[i]).(map[string]interface{})
+		//config是k8s信息 objects是model信息
 		go m.Run(config, objects)
 	}
 }

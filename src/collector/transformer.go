@@ -7,7 +7,11 @@ import (
 	"strconv"
 )
 
-func PreparePodData(item v1.Pod) *a.Pods {
+type Transformer struct {
+	k8sName string
+}
+
+func (t *Transformer) PreparePodData(item v1.Pod) *a.Pods {
 	var labelsStr string
 	for key := range item.Labels {
 		labelsStr += key
@@ -23,19 +27,20 @@ func PreparePodData(item v1.Pod) *a.Pods {
 		ordId               = string(item.ObjectMeta.OwnerReferences[0].UID)
 	}
 
+
 	pod := a.Pods{
 		Name:        item.Name,
 		Id:          string(item.UID),
 		Namespace:   item.Namespace,
-		NodeName:    item.Spec.NodeName,
+		NodeName:    item.Spec.NodeName + "_" + t.k8sName,
 		HostName:    item.Spec.Hostname,
-		ClusterName: item.ClusterName,
+		ClusterName: t.k8sName,
 		Labels:      labelsStr,
 		Status:      string(item.Status.Phase),
 		PodIP:       item.Status.PodIP,
 		OwnerReferencesName: ownerReferencesName,
 		OwnerReferencesType: ownerReferencesType,
-		NameWithNS:  item.Name + "_" + item.Namespace,
+		NameWithNsK8s:  item.Name + "_" + item.Namespace + "_" + t.k8sName,
 		//OrnWithNS:   ownerReferencesName + "_" + item.Namespace,
 		OrnId:       ordId,
 	}
@@ -43,7 +48,7 @@ func PreparePodData(item v1.Pod) *a.Pods {
 	return &pod
 }
 
-func PrepareContainerData(item v1.Pod) *[]a.Container {
+func (t *Transformer) PrepareContainerData(item v1.Pod) *[]a.Container {
 	containers := item.Spec.Containers
 	var res []a.Container
 	for _, c := range containers {
@@ -68,9 +73,10 @@ func PrepareContainerData(item v1.Pod) *[]a.Container {
 			Name:          c.Name,
 			Id:            c.Name + "_" + string(item.UID),
 			ContainerName: c.Name,
-			PodNameWithNS:       item.Name + "_" + item.Namespace,
+			PodNameWithNsK8s:       item.Name + "_" + item.Namespace + "_" + t.k8sName,
 			Image:         c.Image,
 			Namespace:     item.Namespace,
+			ClusterName:   t.k8sName,
 			//Command:       command,
 			//Args:          arg,
 			WorkingDir: c.WorkingDir,
@@ -81,7 +87,7 @@ func PrepareContainerData(item v1.Pod) *[]a.Container {
 	return &res
 }
 
-func PrepareNodeData(item v1.Node) (*a.Node, error) {
+func (t *Transformer) PrepareNodeData(item v1.Node) (*a.Node, error) {
 	np := string(item.Status.Phase)
 	labels := ""
 	for key, val := range item.Labels {
@@ -94,34 +100,36 @@ func PrepareNodeData(item v1.Node) (*a.Node, error) {
 
 	node := a.Node{
 		Name:        item.Name,
+		FullName:    item.Name + "_" + t.k8sName,
 		Id:          string(item.UID),
 		NodePhase:   np,
 		Labels:      labels,
-		ClusterName: item.ClusterName,
 		IP:          address,
+		ClusterName:   t.k8sName,
 	}
 	return &node, nil
 }
 
-func PrepareStsData(item app.StatefulSet) (*a.Statefulsets, error) {
+func (t *Transformer) PrepareStsData(item app.StatefulSet) (*a.Statefulsets, error) {
 	sel := ""
 	for key, val := range item.Spec.Selector.MatchLabels {
 		sel = sel + key + ":" + val + ";"
 	}
 	sts := a.Statefulsets{
-		Name:            item.Name,
+		Name:            item.Name ,
 		Id:              string(item.UID),
 		Namespace:       item.Namespace,
 		ServiceName:     item.Spec.ServiceName,
 		Replicas:        item.Status.Replicas,
 		Selector:        sel,
 		NameWithNS:  item.Name + "_" + item.Namespace,
+		ClusterName:   t.k8sName,
 
 	}
 	return &sts, nil
 }
 
-func PrepareDeployData(item app.Deployment) (*a.Deployments, error) {
+func (t *Transformer) PrepareDeployData(item app.Deployment) (*a.Deployments, error) {
 	sel := ""
 	for key, val := range item.Spec.Selector.MatchLabels {
 		sel = sel + key + ":" + val + ";"
@@ -133,12 +141,13 @@ func PrepareDeployData(item app.Deployment) (*a.Deployments, error) {
 		Replicas:            item.Status.Replicas,
 		Selector:        sel,
 		NameWithNS:  item.Name + "_" + item.Namespace,
+		ClusterName:   t.k8sName,
 
 	}
 	return &deploy, nil
 }
 
-func PrepareDsData(item app.DaemonSet) (*a.DaemonSets, error) {
+func (t *Transformer) PrepareDsData(item app.DaemonSet) (*a.DaemonSets, error) {
 	sel := ""
 	for key, val := range item.Spec.Selector.MatchLabels {
 		sel = sel + key + ":" + val + ";"
@@ -149,11 +158,12 @@ func PrepareDsData(item app.DaemonSet) (*a.DaemonSets, error) {
 		Namespace: item.Namespace,
 		Selector:        sel,
 		NameWithNS:  item.Name + "_" + item.Namespace,
+		ClusterName:   t.k8sName,
 	}
 	return &ds, nil
 }
 
-func PrepareRCData(item app.ReplicaSet) (*a.ReplicaSet, error) {
+func (t *Transformer) PrepareRCData(item app.ReplicaSet) (*a.ReplicaSet, error) {
 	sel := ""
 	for key, val := range item.Spec.Selector.MatchLabels {
 		sel = sel + key + ":" + val + ";"
@@ -176,8 +186,20 @@ func PrepareRCData(item app.ReplicaSet) (*a.ReplicaSet, error) {
 		OwnerReferencesName: ownerReferencesName,
 		OwnerReferencesType: ownerReferencesType,
 		OrnId: ordId,
+		ClusterName:   t.k8sName,
 
 	}
 	return &rc, nil
 }
+
+//func PrepareAppData(map[string][]map[string]string)(*[]interface{}, error){
+//	var data  []interface{}
+//	for key, val := range res {
+//		for _, val2 := range val {
+//			val2["appGroup"] = key
+//			data = append(data, val2)
+//		}
+//	}
+//
+//}
 

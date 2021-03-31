@@ -12,17 +12,17 @@ type Pods struct {
 	PodIP       string `json:"ip,omitempty"`
 	OwnerReferencesName string `json:"orn"`
 	OwnerReferencesType string `json:"ort"`
-	NameWithNS  string  `json:"name_ns"`
+	NameWithNsK8s  string  `json:"name_ns_k8s"`
 	//OrnWithNS   string  `json:"orn_ns"`
 	OrnId       string  `json:"orn_id"`
-	K8sName string `json:"k8s_name"`
 }
 
 type Container struct {
 	Name          string `json:"bk_inst_name"`
 	Id            string `json:"id"`
 	ContainerName string `json:"name"`
-	PodNameWithNS       string `json:"pod_name"`
+	PodNameWithNsK8s       string `json:"pod_ns_k8s"`
+	ClusterName string `json:"clustername,omitempty"`
 	Image         string `json:"image,omitempty"`
 	Namespace   string `json:"namespace,omitempty"`
 	//Command       string `json:"icp_container_comm,omitempty"`
@@ -41,6 +41,7 @@ type Node struct {
 	Labels      string `json:"labels"`
 	ClusterName string `json:"cn"`
 	K8sName string `json:"k8s_name"`
+	FullName string `json:"node_k8s"`
 }
 
 type Statefulsets struct {
@@ -54,7 +55,7 @@ type Statefulsets struct {
 	//UpdatedReplicas int32  `json:"icp_sts_urp"`
 	Selector        string	`json:"selector"`
 	NameWithNS  string  `json:"name_ns"`
-	K8sName string `json:"k8s_name"`
+	ClusterName string `json:"cn"`
 }
 
 type Deployments struct {
@@ -64,7 +65,7 @@ type Deployments struct {
 	Replicas            int32  `json:"rp"`
 	Selector        string	`json:"selector"`
 	NameWithNS  string  `json:"name_ns"`
-	K8sName string `json:"k8s_name"`
+	ClusterName string `json:"cn"`
 	//UpdatedReplicas     int32  `json:"icp_deploy_urp"`
 	//ReadyReplicas       int32  `json:"icp_deploy_rrp"`
 	//AvailableReplicas   int32  `json:"icp_deploy_arp"`
@@ -77,7 +78,7 @@ type DaemonSets struct {
 	Namespace string `json:"ns"`
 	Selector        string	`json:"selector"`
 	NameWithNS  string  `json:"name_ns"`
-	K8sName string `json:"k8s_name"`
+	ClusterName string `json:"cn"`
 }
 
 type ReplicaSet struct {
@@ -91,7 +92,7 @@ type ReplicaSet struct {
 	NameWithNS  string  `json:"name_ns"`
 	OrnWithNS   string  `json:"orn_ns"`
 	OrnId       string  `json:"orn_id"`
-	K8sName string `json:"k8s_name"`
+	ClusterName string `json:"cn"`
 }
 
 type App struct {

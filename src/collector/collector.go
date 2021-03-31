@@ -20,14 +20,15 @@ type Collector struct {
 	client    *kubernetes.Clientset
 	options *options.Options
 	HttpClient  *http.Client
+	Transer *Transformer
 
 }
 
 
 func NewCollector(opts *options.Options, k8s map[string]interface{}) (*Collector, error) {
 
-	c := &Collector{}
-
+	t := &Transformer{k8sName: k8s["name"].(string)}
+	c := &Collector{Transer: t}
 	config := rest.Config{
 		Host:                k8s["server"].(string),
 		BearerToken:         k8s["token"].(string),
@@ -125,9 +126,62 @@ func (c *Collector) GetObjData(id string) (*[]interface{}, error) {
 		}
 		return &res, nil
 	}
+	if id == "app"{
+
+	}
 
 	return nil, errors.New("未知object id")
 }
+
+//func (c *Collector) GetApps()(*[]interface{}, error)  {
+//	var res map[string][]map[string]string
+//
+//	client := &http.Client{}
+//	url := c.options.LcmBaseUrl +  "/lcm/v1/sites/" + c.options.LcmSite + "/branches/" + c.options.LcmBranch + "/apps"
+//	req, err := http.NewRequest("GET", url, nil)
+//	if err != nil {
+//		return nil, err
+//	}
+//	//req.Header.Set("Content-Type", c.ContentType)
+//	resp, err := client.Do(req)
+//	if err != nil {
+//		return nil, err
+//	}
+//	defer resp.Body.Close()
+//	body, err := ioutil.ReadAll(resp.Body)
+//	if err != nil{
+//		return nil, err
+//	}
+//	json.Unmarshal(body, &res)
+//	for key, val := range res {
+//		for _, val2 := range val {
+//			val2["appGroup"] = key
+//			data = append(data, val2)
+//		}
+//	}
+//	res = nil
+//	return &data, nil
+//}
+
+//func (c *Collector) GetAppGroups()(*[]interface{}, error)  {
+//	client := &http.Client{}
+//	url := c.options.LcmBaseUrl +  "/lcm/v1/sites/" + c.options.LcmSite + "/branches/" + c.options.LcmBranch + "/appGroups"
+//	req, err := http.NewRequest("GET", url, nil)
+//	if err != nil {
+//		return nil, err
+//	}
+//	//req.Header.Set("Content-Type", c.ContentType)
+//	resp, err := client.Do(req)
+//	if err != nil {
+//		return nil, err
+//	}
+//	defer resp.Body.Close()
+//	body, err := ioutil.ReadAll(resp.Body)
+//	if err != nil{
+//		return nil, err
+//	}
+//
+//}
 
 func (c *Collector) GetPods(ns string) (*[]interface{}, error) {
 	var podList []interface{}
@@ -137,7 +191,7 @@ func (c *Collector) GetPods(ns string) (*[]interface{}, error) {
 	}
 
 	for _, item := range pods.Items {
-		data := PreparePodData(item)
+		data := c.Transer.PreparePodData(item)
 		podList = append(podList, *data)
 	}
 
@@ -148,7 +202,7 @@ func (c *Collector) GetNodes() (*[]interface{}, error) {
 	nodes, err := c.client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 	var nodeList []interface{}
 	for _, item := range nodes.Items {
-		node, err := PrepareNodeData(item)
+		node, err := c.Transer.PrepareNodeData(item)
 		if err != nil {
 			return nil, err
 		}
@@ -169,7 +223,7 @@ func (c *Collector) GetContainers(ns string) (*[]interface{}, error) {
 	}
 
 	for _, item := range pods.Items {
-		con := PrepareContainerData(item)
+		con := c.Transer.PrepareContainerData(item)
 		if len(*con) > 0{
 			for _, item := range *con {
 				containers = append(containers, item)
@@ -203,7 +257,7 @@ func (c *Collector) GetStatefulsets(ns string) (*[]interface{}, error) {
 	}
 	var stsList []interface{}
 	for _, item := range sts.Items {
-		sts, err := PrepareStsData(item)
+		sts, err := c.Transer.PrepareStsData(item)
 		if err != nil {
 			return nil, err
 		}
@@ -219,7 +273,7 @@ func (c *Collector) GetDeployments(ns string) (*[]interface{}, error) {
 	}
 	var deployList []interface{}
 	for _, item := range deploy.Items {
-		deploy, err := PrepareDeployData(item)
+		deploy, err := c.Transer.PrepareDeployData(item)
 		if err != nil {
 			return nil, err
 		}
@@ -235,7 +289,7 @@ func (c *Collector) GetDaemonSets(ns string) (*[]interface{}, error) {
 	}
 	var dsList []interface{}
 	for _, item := range ds.Items {
-		ds, err := PrepareDsData(item)
+		ds, err := c.Transer.PrepareDsData(item)
 		if err != nil {
 			return nil, err
 		}
@@ -251,7 +305,7 @@ func (c *Collector) GetReplicaSets(ns string) (*[]interface{}, error) {
 	}
 	var list []interface{}
 	for _, item := range rc.Items {
-		rc, err := PrepareRCData(item)
+		rc, err := c.Transer.PrepareRCData(item)
 		if err != nil {
 			return nil, err
 		}

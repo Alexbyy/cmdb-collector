@@ -1,7 +1,7 @@
 {
   "AssociConfig": {
-    "pod_group_container": {"pod": "name_ns", "container": "pod_name", "operator": "$eq"},
-    "node_run_pod":         {"node": "bk_inst_name", "pod": "nodename", "operator": "$eq"},
+    "pod_group_container": {"pod": "name_ns_k8s", "container": "pod_ns_k8s", "operator": "$eq"},
+    "node_run_pod":         {"node": "node_k8s", "pod": "nodename", "operator": "$eq"},
     "sts_create_pod":      {"sts": "id", "pod": "orn_id", "operator": "$eq"},
     "ds_create_pod":      {"ds": "id", "pod": "orn_id", "operator": "$eq"},
     "deploy_create_pod":   {"deploy": "id", "pod": "orn_id", "operator":"$eq"},
