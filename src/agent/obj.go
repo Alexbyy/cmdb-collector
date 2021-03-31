@@ -12,7 +12,6 @@ type Pods struct {
 	PodIP       string `json:"ip,omitempty"`
 	OwnerReferencesName string `json:"orn"`
 	OwnerReferencesType string `json:"ort"`
-	NameWithNsK8s  string  `json:"name_ns_k8s"`
 	//OrnWithNS   string  `json:"orn_ns"`
 	OrnId       string  `json:"orn_id"`
 }
@@ -56,6 +55,7 @@ type Statefulsets struct {
 	Selector        string	`json:"selector"`
 	NameWithNS  string  `json:"name_ns"`
 	ClusterName string `json:"cn"`
+	Release     string `json:"release"`
 }
 
 type Deployments struct {
@@ -66,6 +66,7 @@ type Deployments struct {
 	Selector        string	`json:"selector"`
 	NameWithNS  string  `json:"name_ns"`
 	ClusterName string `json:"cn"`
+	Release     string `json:"release"`
 	//UpdatedReplicas     int32  `json:"icp_deploy_urp"`
 	//ReadyReplicas       int32  `json:"icp_deploy_rrp"`
 	//AvailableReplicas   int32  `json:"icp_deploy_arp"`
@@ -79,6 +80,7 @@ type DaemonSets struct {
 	Selector        string	`json:"selector"`
 	NameWithNS  string  `json:"name_ns"`
 	ClusterName string `json:"cn"`
+	Release     string `json:"release"`
 }
 
 type ReplicaSet struct {
@@ -93,6 +95,7 @@ type ReplicaSet struct {
 	OrnWithNS   string  `json:"orn_ns"`
 	OrnId       string  `json:"orn_id"`
 	ClusterName string `json:"cn"`
+	Release     string `json:"release"`
 }
 
 type App struct {

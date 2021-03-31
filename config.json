@@ -6,6 +6,10 @@
     "ds_create_pod":      {"ds": "id", "pod": "orn_id", "operator": "$eq"},
     "deploy_create_pod":   {"deploy": "id", "pod": "orn_id", "operator":"$eq"},
     "rc_create_pod":      {"rc":  "id", "pod":  "orn_id", "operator":  "$eq"},
-    "deploy_create_rc":  {"deploy": "id", "rc":  "orn_id", "operator":  "$eq"}
+    "deploy_create_rc":  {"deploy": "id", "rc":  "orn_id", "operator":  "$eq"},
+    "app_create_sts": {"app": "release_name", "sts":  "release", "operator":  "$eq"},
+    "app_create_deploy": {"app": "release_name", "deploy": "release", "operator":  "$eq"},
+    "app_create_ds": {"app": "release_name", "ds": "release", "operator":  "$eq"},
+    "app_group_group_app": {"app_group": "bk_inst_name", "app": "app_group", "operator":  "$eq"}
   }
 }

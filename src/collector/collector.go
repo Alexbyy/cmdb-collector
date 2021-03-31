@@ -133,55 +133,62 @@ func (c *Collector) GetObjData(id string) (*[]interface{}, error) {
 	return nil, errors.New("未知object id")
 }
 
-//func (c *Collector) GetApps()(*[]interface{}, error)  {
-//	var res map[string][]map[string]string
-//
-//	client := &http.Client{}
-//	url := c.options.LcmBaseUrl +  "/lcm/v1/sites/" + c.options.LcmSite + "/branches/" + c.options.LcmBranch + "/apps"
-//	req, err := http.NewRequest("GET", url, nil)
-//	if err != nil {
-//		return nil, err
-//	}
-//	//req.Header.Set("Content-Type", c.ContentType)
-//	resp, err := client.Do(req)
-//	if err != nil {
-//		return nil, err
-//	}
-//	defer resp.Body.Close()
-//	body, err := ioutil.ReadAll(resp.Body)
-//	if err != nil{
-//		return nil, err
-//	}
-//	json.Unmarshal(body, &res)
-//	for key, val := range res {
-//		for _, val2 := range val {
-//			val2["appGroup"] = key
-//			data = append(data, val2)
-//		}
-//	}
-//	res = nil
-//	return &data, nil
-//}
+func (c *Collector) GetApps()(*[]interface{}, error)  {
+	var res map[string][]map[string]string
+	var data  []interface{}
+	client := &http.Client{}
+	url := c.options.LcmBaseUrl +  "/lcm/v1/sites/" + c.options.LcmSite + "/branches/" + c.options.LcmBranch + "/apps"
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	//req.Header.Set("Content-Type", c.ContentType)
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil{
+		return nil, err
+	}
+	json.Unmarshal(body, &res)
 
-//func (c *Collector) GetAppGroups()(*[]interface{}, error)  {
-//	client := &http.Client{}
-//	url := c.options.LcmBaseUrl +  "/lcm/v1/sites/" + c.options.LcmSite + "/branches/" + c.options.LcmBranch + "/appGroups"
-//	req, err := http.NewRequest("GET", url, nil)
-//	if err != nil {
-//		return nil, err
-//	}
-//	//req.Header.Set("Content-Type", c.ContentType)
-//	resp, err := client.Do(req)
-//	if err != nil {
-//		return nil, err
-//	}
-//	defer resp.Body.Close()
-//	body, err := ioutil.ReadAll(resp.Body)
-//	if err != nil{
-//		return nil, err
-//	}
-//
-//}
+	for key, val := range res {
+		for _, val2 := range val {
+			val2["appGroup"] = key
+			temp, err := c.Transer.PrepareAppData(val2)
+			if err != nil {
+				return nil,err
+			}
+			data = append(data, temp)
+		}
+	}
+	return &data, nil
+}
+
+func (c *Collector) GetAppGroups()(*[]interface{}, error)  {
+	var res []interface{}
+	client := &http.Client{}
+	url := c.options.LcmBaseUrl +  "/lcm/v1/sites/" + c.options.LcmSite + "/branches/" + c.options.LcmBranch + "/appGroups"
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	//req.Header.Set("Content-Type", c.ContentType)
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil{
+		return nil, err
+	}
+	json.Unmarshal(body, &res)
+	return &res, nil
+
+}
 
 func (c *Collector) GetPods(ns string) (*[]interface{}, error) {
 	var podList []interface{}

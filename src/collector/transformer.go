@@ -115,6 +115,10 @@ func (t *Transformer) PrepareStsData(item app.StatefulSet) (*a.Statefulsets, err
 	for key, val := range item.Spec.Selector.MatchLabels {
 		sel = sel + key + ":" + val + ";"
 	}
+	release := ""
+	if _, ok := item.Labels["release"]; ok{
+		release = item.Labels["release"]
+	}
 	sts := a.Statefulsets{
 		Name:            item.Name ,
 		Id:              string(item.UID),
@@ -124,6 +128,7 @@ func (t *Transformer) PrepareStsData(item app.StatefulSet) (*a.Statefulsets, err
 		Selector:        sel,
 		NameWithNS:  item.Name + "_" + item.Namespace,
 		ClusterName:   t.k8sName,
+		Release:         release,
 
 	}
 	return &sts, nil
@@ -192,14 +197,18 @@ func (t *Transformer) PrepareRCData(item app.ReplicaSet) (*a.ReplicaSet, error) 
 	return &rc, nil
 }
 
-//func PrepareAppData(map[string][]map[string]string)(*[]interface{}, error){
-//	var data  []interface{}
-//	for key, val := range res {
-//		for _, val2 := range val {
-//			val2["appGroup"] = key
-//			data = append(data, val2)
-//		}
-//	}
-//
-//}
+func (t *Transformer) PrepareAppData(item map[string]string)(*a.App, error){
+	app := a.App{
+		Name:        item["appName"],
+		ReleaseName: item["releaseName"],
+		NameSpace:   item["namespace"],
+		K8sName:     t.k8sName,
+		AppGroup:    item["appGroup"],
+	}
+	
+	return &app, nil
+
+}
+
+
 
