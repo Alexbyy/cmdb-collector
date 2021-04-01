@@ -6,7 +6,7 @@ import (
 var configPath = flag.String("config_path", "/config.json", "The path of config file")
 var lcmBaseUrl =  flag.String("lcm_base_url", "http://10.110.18.31:30977", "The base url of lcm")
 var lcmSite = flag.String("lcm_site", "icpshiptest", "The site's name of lcm")
-var lcmBranch = flag.String("lcm_branch", "master", "The site's branch of lcm")
+var lcmBranch = flag.String("lcm_branch", "xh-test-lma", "The site's branch of lcm")
 
 type Options struct {
 	ConfigPath string

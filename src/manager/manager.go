@@ -10,6 +10,7 @@ import (
 	"k8s.io/klog/v2"
 	"net/http"
 	"strings"
+	"time"
 )
 
 type Manager struct {
@@ -49,16 +50,19 @@ func (m *Manager) Start(){
 	}
 	m.Options.K8s = k8s
 
-
+	start := time.Now()
 	//清理旧实例
 	klog.Infof("Cleaning old data》》》》》》》》》》》》》》")
 	err = m.Agent.ClearAllAssociations()
+	fmt.Printf("清理关系：%s\n",time.Since(start))
 	err = m.Agent.ClearAllInstance()
+
 	if err != nil{
 		klog.Fatalf("清理旧数据发生错误： %v\n", err)
 	}else {
 		klog.V(2).Infof("Cleaning old data done")
 	}
+	fmt.Printf("清理实例：%s\n",time.Since(start))
 
 	//step1:获取Objects
 	klog.Infof("get objects》》》》》》》》》》》》》》")
@@ -68,6 +72,8 @@ func (m *Manager) Start(){
 	}
 
 	klog.Infof("一共有%v个集群", len(*k8s))
+	m.Run_temp(nil, objects)
+	fmt.Println(time.Since(start))
 	for i := 0; i < len(*k8s); i++ {
 		fmt.Printf("启动线程：%v\n", i)
 		config := ((*k8s)[i]).(map[string]interface{})
@@ -77,6 +83,7 @@ func (m *Manager) Start(){
 }
 
 func (m *Manager) Run(config map[string]interface{}, objects  map[string]interface{})  {
+	start := time.Now()
 	collector, err := collector.NewCollector(m.Options, config)
 	if err != nil {
 		klog.Errorf("创建collector 报错： %v\n", err)
@@ -88,7 +95,73 @@ func (m *Manager) Run(config map[string]interface{}, objects  map[string]interfa
 	for _, value := range objects["data"].([]interface{}) {
 		//此id为模型分组id
 		classificationId := value.(map[string]interface{})["bk_classification_id"].(string)
-		if classificationId == "bk_host_manage" || classificationId == "bk_biz_topo" || classificationId == "bk_organization" || classificationId == "bk_network" {
+		if classificationId == "charts" ||  classificationId == "bk_host_manage" || classificationId == "bk_biz_topo" || classificationId == "bk_organization" || classificationId == "bk_network" {
+			continue
+		}
+
+
+		//获取分组id下的object的数据
+		objects := value.(map[string]interface{})["bk_objects"].([]interface{})
+		if len(objects) == 0 {
+			continue
+		}
+		for _, item := range objects {
+			objId := item.(map[string]interface{})["bk_obj_id"].(string)
+			data, err := collector.GetObjData(objId)
+			if err != nil || data == nil || len(*data) == 0{
+				klog.Errorf("获取object数据:%v 错误：%v, 获取结果： %v\n", objId, err, data)
+				continue
+			}
+
+			//step3：遍历data，创建实例
+			for _, item := range *data {
+
+				switch item := item.(type) {
+				case nil:
+					continue
+				default:
+					InstanceRes, err := m.Agent.AddInstance("POST", objId, item)
+					if err != nil || InstanceRes["bk_error_msg"] != "success"{
+						klog.Errorf("AddInstance error: %v,AddInstance result: %v, objId: %v, data: %v\n", err, InstanceRes, objId, item)
+						continue
+					}
+
+					//step4：已成功创建实例，这一步获取obj_item的关系
+					associRes1, associRes2, err := m.Agent.GetObjAssociation(objId)
+					if err != nil || associRes1["bk_error_msg"] != "success" || associRes2["bk_error_msg"] != "success" {
+						klog.Errorf("GetObjAssociation error: %v\n", err)
+						klog.Errorf("GetObjAssociation  %v error, error info: %v;%v\n", item, associRes1["bk_error_msg"],associRes2["bk_error_msg"])
+						continue
+
+					}
+
+					//step5:遍历associRes建立实例间关系
+					associ1 := associRes1["data"].([]interface{})
+					associ2 := associRes2["data"].([]interface{})
+					m.BuildAssociation(&InstanceRes, &associ1, objId)
+					m.BuildAssociation(&InstanceRes, &associ2, objId)
+					//fmt.Printf("associ1 len: %v;associ2 len :%v\n", len(associ1), len(associ2))
+				}
+			}
+		}
+	}
+	fmt.Printf("线程跑完用时：%s\v", time.Since(start))
+
+}
+
+func (m *Manager) Run_temp(config map[string]interface{}, objects  map[string]interface{})  {
+	collector, err := collector.NewCollector(m.Options, config)
+	if err != nil {
+		klog.Errorf("创建collector 报错： %v\n", err)
+		return
+	}
+
+	//step2:遍历获取到的objects
+	klog.Infof("遍历objects》》》》》》》》》》》》")
+	for _, value := range objects["data"].([]interface{}) {
+		//此id为模型分组id
+		classificationId := value.(map[string]interface{})["bk_classification_id"].(string)
+		if classificationId != "charts" {
 			continue
 		}
 
@@ -145,7 +218,7 @@ func (m *Manager) Run(config map[string]interface{}, objects  map[string]interfa
 
 func  (m *Manager) BuildAssociation(instanceData *map[string]interface{}, associInstList *[]interface{}, objId string){
 	if *instanceData == nil || *associInstList == nil ||(*instanceData)["data"] == nil{
-		klog.V(4).Infof("BuildAssociation received nil params: instanceData: %v;associInstList: %v\n", *instanceData, *associInstList)
+		klog.V(2).Infof("BuildAssociation received nil params: instanceData: %v;associInstList: %v\n", *instanceData, *associInstList)
 		return
 	}
 	klog.V(4).Infof("此时的objId：%v", objId)
@@ -203,7 +276,7 @@ func  (m *Manager) BuildAssociation(instanceData *map[string]interface{}, associ
 			}
 			data := res["data"].(map[string]interface{})["info"]
 			if len(data.([]interface{})) == 0{
-				klog.V(3).Infof("依据条件未查询到实例")
+				klog.V(2).Infof("依据条件未查询到实例")
 			}
 			for _, item := range data.([]interface{}) {
 				var1 := item.(map[string]interface{})["bk_inst_id"].(float64)

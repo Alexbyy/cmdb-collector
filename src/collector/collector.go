@@ -26,29 +26,33 @@ type Collector struct {
 
 
 func NewCollector(opts *options.Options, k8s map[string]interface{}) (*Collector, error) {
+	c := &Collector{}
+	if k8s != nil{
+		t := &Transformer{k8sName: k8s["name"].(string)}
 
-	t := &Transformer{k8sName: k8s["name"].(string)}
-	c := &Collector{Transer: t}
-	config := rest.Config{
-		Host:                k8s["server"].(string),
-		BearerToken:         k8s["token"].(string),
-		TLSClientConfig:     rest.TLSClientConfig{
-			Insecure: true,
-		},
+		config := rest.Config{
+			Host:                k8s["server"].(string),
+			BearerToken:         k8s["token"].(string),
+			TLSClientConfig:     rest.TLSClientConfig{
+				Insecure: true,
+			},
+		}
+		klog.Infof("config>>>>>>>: %v\n", config)
+		// creates the in-cluster config
+		//config, err := rest.InClusterConfig()
+		// creates the clientset
+		clientset, err := kubernetes.NewForConfig(&config)
+		if err != nil {
+			return nil, err
+		}
+		c.client = clientset
+		c.Transer = t
+		err = c.GetNamespaces()
+		if err != nil {
+			return nil,err
+		}
 	}
-	klog.Infof("config>>>>>>>: %v\n", config)
-	// creates the in-cluster config
-	//config, err := rest.InClusterConfig()
-	// creates the clientset
-	clientset, err := kubernetes.NewForConfig(&config)
-	if err != nil {
-		return nil, err
-	}
-	c.client = clientset
-	err = c.GetNamespaces()
-	if err != nil {
-		return nil,err
-	}
+
 	c.options = opts
 	c.HttpClient = &http.Client{}
 	return c, nil
@@ -127,7 +131,18 @@ func (c *Collector) GetObjData(id string) (*[]interface{}, error) {
 		return &res, nil
 	}
 	if id == "app"{
-
+		r, err := c.GetApps()
+		if err != nil {
+			return nil, err
+		}
+		return r, nil
+	}
+	if id == "app_group"{
+		r, err := c.GetAppGroups()
+		if err != nil {
+			return nil, err
+		}
+		return r, nil
 	}
 
 	return nil, errors.New("未知object id")

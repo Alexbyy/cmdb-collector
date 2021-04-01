@@ -128,7 +128,7 @@ func (t *Transformer) PrepareStsData(item app.StatefulSet) (*a.Statefulsets, err
 		Selector:        sel,
 		NameWithNS:  item.Name + "_" + item.Namespace,
 		ClusterName:   t.k8sName,
-		Release:         release,
+		Release:         release + "_" + t.k8sName,
 
 	}
 	return &sts, nil
@@ -139,6 +139,10 @@ func (t *Transformer) PrepareDeployData(item app.Deployment) (*a.Deployments, er
 	for key, val := range item.Spec.Selector.MatchLabels {
 		sel = sel + key + ":" + val + ";"
 	}
+	release := ""
+	if _, ok := item.Labels["release"]; ok{
+		release = item.Labels["release"]
+	}
 	deploy := a.Deployments{
 		Name:                item.Name,
 		Id:                  string(item.UID),
@@ -147,6 +151,7 @@ func (t *Transformer) PrepareDeployData(item app.Deployment) (*a.Deployments, er
 		Selector:        sel,
 		NameWithNS:  item.Name + "_" + item.Namespace,
 		ClusterName:   t.k8sName,
+		Release:         release + "_" + t.k8sName,
 
 	}
 	return &deploy, nil
@@ -157,6 +162,10 @@ func (t *Transformer) PrepareDsData(item app.DaemonSet) (*a.DaemonSets, error) {
 	for key, val := range item.Spec.Selector.MatchLabels {
 		sel = sel + key + ":" + val + ";"
 	}
+	release := ""
+	if _, ok := item.Labels["release"]; ok{
+		release = item.Labels["release"]
+	}
 	ds := a.DaemonSets{
 		Name:      item.Name,
 		Id:        string(item.UID),
@@ -164,6 +173,7 @@ func (t *Transformer) PrepareDsData(item app.DaemonSet) (*a.DaemonSets, error) {
 		Selector:        sel,
 		NameWithNS:  item.Name + "_" + item.Namespace,
 		ClusterName:   t.k8sName,
+		Release:         release + "_" + t.k8sName,
 	}
 	return &ds, nil
 }
@@ -172,6 +182,10 @@ func (t *Transformer) PrepareRCData(item app.ReplicaSet) (*a.ReplicaSet, error) 
 	sel := ""
 	for key, val := range item.Spec.Selector.MatchLabels {
 		sel = sel + key + ":" + val + ";"
+	}
+	release := ""
+	if _, ok := item.Labels["release"]; ok{
+		release = item.Labels["release"]
 	}
 	var ownerReferencesName string
 	var ownerReferencesType string
@@ -192,21 +206,23 @@ func (t *Transformer) PrepareRCData(item app.ReplicaSet) (*a.ReplicaSet, error) 
 		OwnerReferencesType: ownerReferencesType,
 		OrnId: ordId,
 		ClusterName:   t.k8sName,
+		Release:         release + "_" + t.k8sName,
 
 	}
 	return &rc, nil
 }
 
 func (t *Transformer) PrepareAppData(item map[string]string)(*a.App, error){
-	app := a.App{
+	apps := a.App{
 		Name:        item["appName"],
 		ReleaseName: item["releaseName"],
 		NameSpace:   item["namespace"],
-		K8sName:     t.k8sName,
 		AppGroup:    item["appGroup"],
+		ClusterName: item["k8sName"],
+		Id: item["releaseName"] + "_" + item["k8sName"],
 	}
 	
-	return &app, nil
+	return &apps, nil
 
 }
 

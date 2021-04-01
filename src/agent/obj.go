@@ -14,6 +14,7 @@ type Pods struct {
 	OwnerReferencesType string `json:"ort"`
 	//OrnWithNS   string  `json:"orn_ns"`
 	OrnId       string  `json:"orn_id"`
+	NameWithNsK8s string `json:"name_ns_k8s"`
 }
 
 type Container struct {
@@ -102,8 +103,10 @@ type App struct {
 	Name string `json:"bk_inst_name"`
 	ReleaseName string `json:"release_name"`
 	NameSpace   string `json:"ns"`
-	K8sName string `json:"k8s_name"`
 	AppGroup string `json:"app_group"`
+	ClusterName string `json:"cn"`
+	Id string `json:"id"`
+
 }
 
 type AppGroup struct {

@@ -4,12 +4,17 @@ import (
 	a "cmdb-collector/src/agent"
 	m "cmdb-collector/src/manager"
 	"cmdb-collector/src/options"
+	"flag"
 	"k8s.io/klog/v2"
 	"time"
 )
 
 
 
+func init() {
+	// Default logging verbosity to V(2)
+	flag.Set("v", "6")
+}
 
 func main() {
 	klog.InitFlags(nil)
