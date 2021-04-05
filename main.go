@@ -33,9 +33,7 @@ func main() {
 	//定时任务
 	i := 0
 	c := cron.New()
-	//每天凌晨一点执行一次
-	spec := "0 0 1 * * ?"
-	c.AddFunc(spec, func() {
+	c.AddFunc(opts.Cron, func() {
 		i++
 		klog.Infof("cron running:%s; time:%s\n", i, time.Now())
 		manager.Start()
