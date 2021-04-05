@@ -4,6 +4,7 @@ import (
 	a "cmdb-collector/src/agent"
 	m "cmdb-collector/src/manager"
 	"cmdb-collector/src/options"
+	"github.com/robfig/cron"
 	"flag"
 	"k8s.io/klog/v2"
 	"time"
@@ -29,10 +30,18 @@ func main() {
 	}
 	manager.Start()
 
-	for {
-		klog.Info("无限循环中")
-		time.Sleep(60 * time.Second)
-	}
+	//定时任务
+	i := 0
+	c := cron.New()
+	//每天凌晨一点执行一次
+	spec := "0 0 1 * * ?"
+	c.AddFunc(spec, func() {
+		i++
+		klog.Infof("cron running:%s; time:%s\n", i, time.Now())
+		manager.Start()
+	})
+	c.Start()
+	select{}
 
 }
 
