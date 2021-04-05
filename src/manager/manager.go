@@ -84,6 +84,7 @@ func (m *Manager) Start(){
 
 func (m *Manager) Run(config map[string]interface{}, objects  map[string]interface{})  {
 	start := time.Now()
+	fmt.Printf("开始了一个线程")
 	collector, err := collector.NewCollector(m.Options, config)
 	if err != nil {
 		klog.Errorf("创建collector 报错： %v\n", err)
@@ -93,29 +94,35 @@ func (m *Manager) Run(config map[string]interface{}, objects  map[string]interfa
 	//step2:遍历获取到的objects
 	klog.Infof("遍历objects》》》》》》》》》》》》")
 	for _, value := range objects["data"].([]interface{}) {
+		begin0 := time.Now()
 		//此id为模型分组id
 		classificationId := value.(map[string]interface{})["bk_classification_id"].(string)
+
 		if classificationId == "charts" ||  classificationId == "bk_host_manage" || classificationId == "bk_biz_topo" || classificationId == "bk_organization" || classificationId == "bk_network" {
 			continue
 		}
-
 
 		//获取分组id下的object的数据
 		objects := value.(map[string]interface{})["bk_objects"].([]interface{})
 		if len(objects) == 0 {
 			continue
 		}
+		klog.Infof("正在处理的group name：%s，该组下有%s个objects\n", classificationId, len(objects))
 		for _, item := range objects {
+			begin1 := time.Now()
 			objId := item.(map[string]interface{})["bk_obj_id"].(string)
 			data, err := collector.GetObjData(objId)
 			if err != nil || data == nil || len(*data) == 0{
 				klog.Errorf("获取object数据:%v 错误：%v, 获取结果： %v\n", objId, err, data)
 				continue
 			}
+			klog.Infof("开始处理object：%s,该object有%s个实例\n", objId, len(*data))
 
 			//step3：遍历data，创建实例
+			//lenData := len(*data)
 			for _, item := range *data {
-
+				//begin2 := time.Now()
+				//klog.Infof("开始创建object %s 的实例，一共有%s个实例\n", objId, lenData)
 				switch item := item.(type) {
 				case nil:
 					continue
@@ -138,14 +145,16 @@ func (m *Manager) Run(config map[string]interface{}, objects  map[string]interfa
 					//step5:遍历associRes建立实例间关系
 					associ1 := associRes1["data"].([]interface{})
 					associ2 := associRes2["data"].([]interface{})
-					m.BuildAssociation(&InstanceRes, &associ1, objId)
-					m.BuildAssociation(&InstanceRes, &associ2, objId)
+					go m.BuildAssociation(&InstanceRes, &associ1, objId)
+					go m.BuildAssociation(&InstanceRes, &associ2, objId)
 					//fmt.Printf("associ1 len: %v;associ2 len :%v\n", len(associ1), len(associ2))
 				}
 			}
+			klog.Infof("object：%s 处理完成,用时：%s\n", objId, time.Since(begin1))
 		}
+		klog.Infof(" 组名为%s的objects已经处理完成，用时:%s\n", classificationId, time.Since(begin0))
 	}
-	fmt.Printf("线程跑完用时：%s\v", time.Since(start))
+	klog.Infof("线程跑完用时：%s\v", time.Since(start))
 
 }
 
