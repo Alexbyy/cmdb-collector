@@ -21,7 +21,7 @@ func main() {
 	klog.InitFlags(nil)
 	defer klog.Flush()
 	opts := options.NewOptions()
-
+	klog.Infof("启动参数：%v\n", opts)
 	agent := a.NewClient("http://10.110.19.61:32033")
 	manager, err := m.NewManager(agent, opts)
 	klog.Infof("Options: %v\n", opts)

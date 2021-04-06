@@ -7,7 +7,7 @@ var configPath = flag.String("config_path", "/config.json", "The path of config 
 var lcmBaseUrl =  flag.String("lcm_base_url", "http://10.110.18.31:30977", "The base url of lcm")
 var lcmSite = flag.String("lcm_site", "icpshiptest", "The site's name of lcm")
 var lcmBranch = flag.String("lcm_branch", "xh-test-lma", "The site's branch of lcm")
-var cron = flag.String("cron", "0 0 1 * * ?", "the cron param specifies the time when collector should start again")
+var cron = flag.String("cron", "0 0 17 * * ?", "the cron param specifies the time when collector should start again")
 
 type Options struct {
 	ConfigPath string
