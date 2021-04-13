@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"cmdb-collector/src/options"
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/klog/v2"
@@ -60,12 +61,15 @@ import (
 
 //获取所有实例关系，并删除该关系
 func TestClient_GetAssociList(t *testing.T) {
-	agent := NewClient("http://10.110.19.61:32033")
+	opt := new(options.Options)
+	opt.CmdbBaseUrl="http://10.110.19.60:32033"
+	agent := NewClient(opt)
 	//step1:获取Objects
 	objects, err := agent.GetModels()
 	if err != nil {
 		klog.Errorf("get Objects error: v%\n", err)
 	}
+	klog.Infof("objects:%v\n", objects)
 	for _, value := range objects["data"].([]interface{}) {
 		//此id为模型分组id
 		classificationId := value.(map[string]interface{})["bk_classification_id"].(string)
@@ -136,7 +140,9 @@ func TestClient_GetAssociList(t *testing.T) {
 
 //获取所有实例并删除该实例
 func TestClient_DelInstanceList(t *testing.T) {
-	agent := NewClient("http://10.110.19.61:32033")
+	opt := new(options.Options)
+	opt.CmdbBaseUrl="http://10.110.19.61:32033"
+	agent := NewClient(opt)
 
 
 	//step1:获取Objects
@@ -177,7 +183,9 @@ func TestClient_DelInstanceList(t *testing.T) {
 
 //T
 func TestClient_DelInstanceBatch(t *testing.T) {
-	agent := NewClient("http://10.110.19.61:32033")
+	opt := new(options.Options)
+	opt.CmdbBaseUrl="http://10.110.19.61:32033"
+	agent := NewClient(opt)
 
 	//step1:获取Objects
 	objects, err := agent.GetModels()
@@ -222,7 +230,9 @@ func TestClient_DelInstanceBatch(t *testing.T) {
 }
 
 func TestClient_GetModels(t *testing.T) {
-	agent := NewClient("http://10.110.19.61:32033")
+	opt := new(options.Options)
+	opt.CmdbBaseUrl="http://10.110.19.61:32033"
+	agent := NewClient(opt)
 	res, err := agent.GetModels()
 	if err != nil {
 		klog.Errorf("GetAssociList error: %v\n", err)
@@ -232,7 +242,9 @@ func TestClient_GetModels(t *testing.T) {
 }
 
 func TestClient_GetObjAssociation(t *testing.T) {
-	agent := NewClient("http://10.110.19.61:32033")
+	opt := new(options.Options)
+	opt.CmdbBaseUrl="http://10.110.19.61:32033"
+	agent := NewClient(opt)
 	ass1, ass2, _ := agent.GetObjAssociation("pod")
 	PrintJson(ass1)
 	PrintJson(ass2)
@@ -244,7 +256,9 @@ func TestClient_GetObjAssociation(t *testing.T) {
 
 
 func TestClient_InstAssoci(t *testing.T) {
-	agent := NewClient("http://10.110.19.61:32033")
+	opt := new(options.Options)
+	opt.CmdbBaseUrl="http://10.110.19.60:32033"
+	agent := NewClient(opt)
 	body := map[string]interface{}{"bk_asst_inst_id":4831, "bk_inst_id":4755, "bk_obj_asst_id":"pod_group_container"}
 
 	res, err := agent.InstAssoci("POST", "/api/v3/create/instassociation", body)
@@ -255,8 +269,9 @@ func TestClient_InstAssoci(t *testing.T) {
 
 //测试根据条件获取某个实例
 func TestClient_GetInstance(t *testing.T) {
-	fmt.Printf("dwadawdwadawdaw")
-	agent := NewClient("http://10.110.19.61:32033")
+	opt := new(options.Options)
+	opt.CmdbBaseUrl="http://10.110.19.61:32033"
+	agent := NewClient(opt)
 	objId := "container"
 
 	instCon := InstCondition{

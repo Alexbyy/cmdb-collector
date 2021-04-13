@@ -2,6 +2,7 @@ package agent
 
 import (
 	"bytes"
+	"cmdb-collector/src/options"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,11 +10,12 @@ import (
 	"k8s.io/klog/v2"
 	"net/http"
 	"strconv"
+	"strings"
+	"time"
 )
 
 type Client struct {
 	BaseUrl     string
-	CookieMap   map[string]string
 	CookieStr   string
 	ContentType string
 	HttpClient  *http.Client
@@ -46,22 +48,47 @@ type DelInstances struct {
 
 
 
-func NewClient(url string) *Client {
-	cookies := map[string]string{
-		"HTTP_BLUEKING_SUPPLIER_ID": "0",
-		"http_scheme":               "http",
-		"cc3":                       "MTYxMTkxMzIzMHxOd3dBTkVGQ1NVTkZTVTVHVTA0MVZUTk5XVkUxVlVSRlVFNUVTRmRMVXpWRFZsSTFTRFpHVGtVeldEZFBRMFEyUjFCRlRVOUpVRkU9fBNp_HYCb_mz_B0U210DQL9ZLcp48P2rA1PPJb3CLwZJ",
+func NewClient(opts *options.Options) *Client {
+	httpClientTrans := &http.Transport{}
+	httpClient := &http.Client{}
+	cookieStr := ""
+
+	//登录获取token
+	req, err := http.NewRequest("POST", opts.CmdbBaseUrl + "/login",
+		strings.NewReader("username=admin&password=123456aB"))
+	if err != nil {
+		klog.Fatalf("登录cmdb失败1：%v\n", err)
 	}
-	cookieStr := "HTTP_BLUEKING_SUPPLIER_ID=0; http_scheme=http; cc3=MTYxNDU4NDYzNXxOd3dBTkVGQ1NVTkZTVTVHVTA0MVZUTk5XVkUxVlVSRlVFNUVTRmRMVXpWRFZsSTFTRFpHVGtVeldEZFBRMFEyUjFCRlRVOUpVRkU9fOEiES7B0ibwzrTblCC4X45LnXWkD-4_Cax53luOa6C3"
+	req.Header.Add("Content-Type","application/x-www-form-urlencoded")
+	req.Header.Add("Content-Length", "32")
+	if err != nil {
+		klog.Fatalf("登录cmdb失败2：%v\n", err)
+	}
+	resp, err := httpClientTrans.RoundTrip(req)
+	for err != nil {
+		klog.Fatalf("登录cmdb失败3, 十秒后重试：%v\n", err)
+		time.Sleep(time.Duration(200) * time.Millisecond)
+		resp, err = httpClientTrans.RoundTrip(req)
+
+	}
+	defer resp.Body.Close()
+
+	// 拼接cookie
+	for _, cookie := range resp.Cookies() {
+		cookieStr += cookie.Name + "=" + cookie.Value + ";"
+		fmt.Println(cookieStr)
+	}
+
+
 	newClient := &Client{
 		BaseUrl:     "http://10.110.19.61:32033",
 		ContentType: "application/json;charset=UTF-8",
-		CookieMap:   cookies,
 		CookieStr:   cookieStr,
-		HttpClient:  &http.Client{},
+		HttpClient: httpClient,
 	}
 	return newClient
 }
+
 
 func (c *Client) AddInstance(method string, url string, body interface{}) (map[string]interface{}, error) {
 	ms, err := json.Marshal(body)
